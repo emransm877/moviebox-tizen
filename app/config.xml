@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<widget xmlns="http://www.w3.org/ns/widgets" xmlns:tizen="http://tizen.org/ns/widgets" id="https://github.com/emransm877/moviebox-tizen" version="0.2.1" viewmodes="maximized">
+  <tizen:application id="MBoxTV2025.MovieBox" package="MBoxTV2025" required_version="7.0"/>
+  <name>MovieBox</name>
+  <content src="index.html"/>
+  <icon src="assets/icon.png"/>
+  <author href="https://github.com/emransm877">Emran Hossain</author>
+  <description>Independent MovieBox TV client for Samsung Tizen televisions.</description>
+  <access origin="https://aoneroom.com" subdomains="true"/>
+  <access origin="https://hakunaymatata.com" subdomains="true"/>
+  <access origin="https://movieboxhd.net" subdomains="true"/>
+  <tizen:profile name="tv-samsung"/>
+  <tizen:privilege name="http://tizen.org/privilege/internet"/>
+  <tizen:privilege name="http://tizen.org/privilege/tv.inputdevice"/>
+  <tizen:privilege name="http://developer.samsung.com/privilege/drmplay"/>
+  <tizen:setting screen-orientation="landscape" context-menu="disable" background-support="disable" encryption="disable" install-location="auto" hwkey-event="enable"/>
+  <tizen:metadata key="http://samsung.com/tv/metadata/prelaunch.support" value="false"/>
+  <tizen:content-security-policy>default-src 'self'; script-src 'self' https://localhost; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src https://*.aoneroom.com https://*.hakunaymatata.com https://movieboxhd.net; media-src https: blob:; object-src 'self'; base-uri 'none';</tizen:content-security-policy>
+</widget>

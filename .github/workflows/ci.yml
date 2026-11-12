@@ -1,0 +1,23 @@
+name: TV source checks
+on: [push, pull_request, workflow_dispatch]
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: node tests/api.test.cjs
+      - run: python -m pip install playwright
+      - run: python tests/ui_acceptance.py
+      - run: python tools/package.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: MovieBox-TV-unsigned-development-widget
+          path: dist/

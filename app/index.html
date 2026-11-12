@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=1920, initial-scale=1">
+  <meta name="theme-color" content="#0b1016">
+  <title>MovieBox</title>
+  <link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+  <div id="app-shell">
+    <aside class="sidebar" aria-label="Main navigation">
+      <div class="brand"><img src="assets/moviebox-logo.svg" alt=""><span>MovieBox</span></div>
+      <button class="nav-button active" data-nav="home"><span class="nav-icon">⌂</span>Discover</button>
+      <button class="nav-button" data-nav="search"><span class="nav-icon">⌕</span>Search</button>
+      <button class="nav-button" data-nav="history"><span class="nav-icon">◷</span>Continue watching</button>
+      <button class="nav-button" data-nav="saved"><span class="nav-icon">＋</span>My list</button>
+      <div class="sidebar-bottom"><button class="nav-button" data-nav="settings"><span class="nav-icon">⚙</span>Settings</button><span class="build-label">MADE FOR YOUR BIG SCREEN</span></div>
+    </aside>
+    <main id="main-content">
+      <header class="topbar"><span id="section-kicker">YOUR NEXT GREAT STORY</span><span class="remote-hint">Arrows to explore · OK to select · Return to go back</span></header>
+      <section id="browse-page" class="page">
+        <div id="hero" class="hero" hidden><div id="hero-art" class="hero-art"></div><div class="hero-shade"></div><div class="hero-copy"><span class="eyebrow">THE SPOTLIGHT</span><h1 id="hero-title"></h1><p id="hero-description"></p><button id="hero-watch" class="primary">Explore title <span>→</span></button></div></div>
+        <div class="section-heading"><div><span class="eyebrow" id="catalog-kicker">A WORLD OF STORIES</span><h2 id="catalog-title">Discover</h2></div><span id="catalog-count"></span></div>
+        <div id="search-panel" hidden><label for="search-input">Find your next favorite</label><div class="search-line"><input id="search-input" type="search" inputmode="search" enterkeyhint="search" placeholder="Movies, series, and more" autocomplete="off" aria-label="Search movies and series"><button id="search-go" class="primary">Search</button></div><div id="suggestions" role="listbox" aria-label="Search suggestions"></div></div>
+        <div id="catalog" class="catalog" aria-label="Titles"></div><button id="more-button" class="secondary" hidden>Show more titles</button>
+        <div id="empty-state" class="empty-state" hidden><span>✦</span><h3>Something good is waiting</h3><p id="empty-message">Your titles will appear here.</p><button id="retry-button" class="secondary">Try again</button></div>
+      </section>
+      <section id="detail-page" class="page" hidden>
+        <button id="detail-back" class="quiet back-button">← Back to browsing</button>
+        <div class="detail-card"><div id="detail-backdrop"></div><img id="detail-poster" alt=""><div class="detail-copy"><span class="eyebrow">MOVIEBOX · READY WHEN YOU ARE</span><h1 id="detail-title"></h1><p id="detail-meta" class="muted"></p><p id="detail-description"></p><div id="season-row" hidden><label for="season-select">Season</label><select id="season-select"></select></div><div class="detail-actions"><button id="watch-button" class="primary">▶ Watch now</button><button id="trailer-button" class="secondary" hidden>Trailer</button><button id="save-button" class="secondary">＋ My list</button></div><p id="detail-notice" class="detail-notice">Pick your quality and subtitle language when playback begins.</p></div></div>
+        <div id="episode-panel" hidden><div class="section-heading"><h2 id="episode-heading">Episodes</h2><span>Choose where the story continues</span></div><div id="episodes" class="episode-grid" aria-label="Episodes"></div></div>
+      </section>
+      <section id="settings-page" class="page" hidden><span class="eyebrow">MAKE IT YOURS</span><h1>Comfort, on your terms.</h1><div class="settings-card"><label for="preferred-quality">Playback quality</label><select id="preferred-quality"><option value="auto">Auto · adapt to your connection</option><option value="1080">Prefer 1080p</option><option value="720">Prefer 720p</option><option value="480">Prefer 480p</option></select><p>Only real, unlocked source qualities are offered. Auto starts conservatively and adjusts if the connection struggles.</p><label for="preferred-language">Subtitle language</label><input id="preferred-language" maxlength="12" placeholder="en" aria-describedby="language-help"><p id="language-help">Use a language code such as en, hi, bn, fr, or es. English is used when your preference is unavailable.</p><label class="check-row"><input id="preferred-subtitles" type="checkbox"> Automatically load and remember subtitles</label><label class="check-row"><input id="preferred-autoplay" type="checkbox"> Play the next episode automatically</label><button id="clear-subtitle-cache" class="secondary">Clear downloaded subtitles</button><p id="settings-platform" class="muted"></p></div></section>
+    </main>
+  </div>
+  <section id="player-page" hidden aria-label="MovieBox video player">
+    <object id="av-player" type="application/avplayer" aria-label="Samsung native video"></object>
+    <video id="html-player" playsinline preload="metadata"></video>
+    <div id="subtitle-overlay" aria-live="off"></div>
+    <div id="player-loading" class="player-loading"><span class="spinner"></span><p id="loading-text">Preparing your story…</p></div>
+    <header id="player-header" class="player-header"><button id="player-back" class="quiet">←</button><strong id="now-title"></strong><span id="player-engine"></span></header>
+    <div id="player-controls" class="player-controls"><input id="seek-bar" type="range" min="0" max="1000" value="0" step="100" aria-label="Seek through video"><div class="transport-row"><button id="play-pause" class="secondary">Pause</button><button id="seek-back" class="quiet">−10s</button><button id="seek-forward" class="quiet">+10s</button><span id="player-clock">0:00 / 0:00</span><span class="transport-spacer"></span><button id="next-button" class="quiet" hidden>Next episode →</button></div><div class="player-options"><label>Quality<select id="quality-select" aria-label="Playback quality"><option value="auto">Auto</option></select></label><label>Audio<select id="audio-select" aria-label="Audio language"><option value="edition:current">Original audio</option></select></label><label>Subtitles<select id="subtitle-select" aria-label="Subtitle language"><option value="off">Off</option></select></label><label>Subtitle delay<select id="subtitle-delay" aria-label="Subtitle timing"><option value="-2000">−2 s</option><option value="-1000">−1 s</option><option value="-500">−0.5 s</option><option value="0" selected>In sync</option><option value="500">+0.5 s</option><option value="1000">+1 s</option><option value="2000">+2 s</option></select></label><span id="stream-status" class="muted"></span><label class="check-row"><input id="autoplay-next" type="checkbox">Autoplay next</label></div></div>
+  </section>
+  <div id="toast" role="status" hidden></div>
+  <div id="exit-dialog" class="modal-shade" hidden><div class="modal"><span class="eyebrow">UNTIL NEXT TIME</span><h2>Leave MovieBox?</h2><p>Your place in the story is saved.</p><div><button id="exit-cancel" class="primary">Keep exploring</button><button id="exit-confirm" class="secondary">Exit</button></div></div></div>
+  <script src="$WEBAPIS/webapis/webapis.js"></script>
+  <script src="js/crypto.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/navigation.js"></script>
+  <script src="js/player.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
