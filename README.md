@@ -9,6 +9,20 @@ Native 1080p playback, subtitle loading, and forward/back seeking were verified;
 the user confirmed seeking with the Samsung remote. Requires Tizen 7.0+; other
 models remain unverified. See [hardware validation](docs/hardware-validation.md).
 
+## Download and install
+
+[**Download TV install bundle**](https://github.com/emransm877/moviebox-tizen/releases/latest/download/MovieBox-TV-0.2.1-install-bundle.zip)
+
+This is a developer-install bundle: an unsigned WGT plus a Windows helper that
+signs and installs using your own Samsung TV certificate profile. Extract it,
+read `INSTALL-TV.md`, then open `Install-MovieBoxTV.cmd`. The PC needs official
+Tizen SDK tools and a certificate authorized for the target TV. The app itself
+does not need the PC after installation. See [installation steps](docs/INSTALL-TV.md).
+
+**There is no universal Samsung TV sideload file or approved Samsung Store listing
+in this release.** Another TV requires its own authorization. This is not an
+Android TV, webOS, Roku or Apple TV package.
+
 ## Features
 
 - Discover titles, live search suggestions, movie details and series episodes.
