@@ -49,13 +49,17 @@
     this.layout(); return this.cachedItems;
   };
   Navigation.prototype.focus = function (element) {
-    if (!element || document.activeElement === element || !element.isConnected || element.disabled || element.closest('[hidden]')) return;
+    if (!element || !element.isConnected || element.disabled || element.closest('[hidden]')) return;
     var entry = this.layout().find(function (record) { return record.element === element; });
     if (!entry) { this.invalidate(); entry = this.layout().find(function (record) { return record.element === element; }); }
     if (!entry) return;
-    try { element.focus({preventScroll:true}); } catch (_) { element.focus(); }
-    this.metrics.focusChanges++;
-    if (entry.top < 20 || entry.bottom > global.innerHeight - 24 || entry.left < 0 || entry.right > global.innerWidth) {
+    if (document.activeElement !== element) { try { element.focus({preventScroll:true}); } catch (_) { element.focus(); } this.metrics.focusChanges++; }
+    var main = element.closest('#main-content'), scrollArea = element.closest('.remote-picker-options') || main, bounds = scrollArea ? scrollArea.getBoundingClientRect() : {top:0,bottom:global.innerHeight,left:0,right:global.innerWidth};
+    if (main) {
+      var firstTop = this.entries.filter(function (record) { return main.contains(record.element); }).reduce(function (top,record) { return Math.min(top,record.top); },Infinity);
+      if (entry.top <= firstTop + 8 && main.scrollTop > 0) { main.scrollTop = 0; this.invalidate(); return; }
+    }
+    if (entry.top < bounds.top + 20 || entry.bottom > bounds.bottom - 24 || entry.left < bounds.left || entry.right > bounds.right) {
       try { element.scrollIntoView({block:'nearest',inline:'nearest',behavior:'auto'}); } catch (_) { element.scrollIntoView(false); }
       this.invalidate();
     }
@@ -85,9 +89,11 @@
     if (!current) { this.focus(entries[0] && entries[0].element); return; }
     var cx = current.x, cy = current.y;
     var horizontal = direction === 'ArrowLeft' || direction === 'ArrowRight', positive = direction === 'ArrowRight' || direction === 'ArrowDown';
+    var main = active.closest && active.closest('#main-content'), sidebar = active.closest && active.closest('.sidebar'), region = !horizontal && (main || sidebar);
     var best = null, score = Infinity;
     entries.forEach(function (entry) {
       if (entry.element === active) return;
+      if (region && !region.contains(entry.element)) return;
       var dx = entry.x - cx, dy = entry.y - cy;
       var forward = horizontal ? dx : dy, sideways = Math.abs(horizontal ? dy : dx);
       if ((positive && forward < 8) || (!positive && forward > -8)) return;
@@ -96,6 +102,7 @@
       if (candidate < score) { score = candidate; best = entry.element; }
     });
     if (best) this.focus(best);
+    else if (!horizontal && main) { var edge = positive ? Math.max(0,main.scrollHeight - main.clientHeight) : 0; if (main.scrollTop !== edge) { main.scrollTop = edge; this.invalidate(); } }
     this.metrics.lastMoveMs = Math.round((performance.now() - started) * 100) / 100;
     this.metrics.maxMoveMs = Math.max(this.metrics.maxMoveMs,this.metrics.lastMoveMs);
   };

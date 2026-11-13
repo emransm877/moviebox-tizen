@@ -1,13 +1,15 @@
 /* Image resize syntax is used by MovieBox's shipped web client and verified on its CDN. */
 (function (global) {
   'use strict';
-  var metrics = {resized:0,blockedOversized:0};
+  var metrics = {resized:0,blockedOversized:0,ignoredPlaceholders:0};
+  function imageUrl(value) { if (typeof value !== 'string') return ''; value = value.trim(); if (/^data:image\//i.test(value)) return value; if (/^\/\//.test(value)) value = 'https:' + value; try { var parsed = new URL(value); return /^https?:$/.test(parsed.protocol) ? parsed.href : ''; } catch (_) { return ''; } }
   function url(subject, kind, width) {
     var value = subject && subject[kind || 'cover'];
     if (!value) return '';
     var record = typeof value === 'string' ? {url:value} : value;
-    var thumbnail = record.thumbnail;
-    var original = typeof thumbnail === 'string' && thumbnail ? thumbnail : thumbnail && thumbnail.url || record.url || '';
+    var thumbnail = imageUrl(typeof record.thumbnail === 'object' && record.thumbnail ? record.thumbnail.url : record.thumbnail);
+    if (record.thumbnail && !thumbnail) metrics.ignoredPlaceholders++;
+    var original = thumbnail || imageUrl(record.url);
     if (!original) return '';
     try {
       var parsed = new URL(original);
@@ -21,5 +23,5 @@
     if (!thumbnail && Number(record.width) * Number(record.height) > 8000000) { metrics.blockedOversized++; return ''; }
     return original;
   }
-  global.MovieBoxArtwork = {url:url,metrics:metrics};
+  global.MovieBoxArtwork = {url:url,metrics:metrics,imageUrl:imageUrl};
 })(window);

@@ -65,6 +65,12 @@
       return this.warming;
     }
     async home() { if(this.preview)return this.proxy('home'); this.warm().catch(()=>{}); return this.web('/home?host=movieboxhd.net'); }
+    async catalogue(kind,filters,page) {
+      const body=root.MovieBoxCatalogue.body(kind,filters,page);
+      if(this.preview)return this.proxy('catalogue',[kind,filters||{},body.page]);
+      const result=await this.web('/subject/filter',body),pager=result.pager||{};
+      return Object.assign({},result,{hasMore:pager.hasMore===true||pager.hasMore===1,nextPage:Number(pager.nextPage)||body.page+1});
+    }
     async search(keyword,page) { if(this.preview)return this.proxy('search',[keyword,page||1]);await this.warm();const result=await this.native('/subject-api/search',{host:NATIVE},{keyword:keyword,page:page||1,perPage:10,subjectType:0});return Object.assign({},result,{hasMore:!!(result.pager&&result.pager.hasMore),nextPage:result.pager&&result.pager.nextPage}); }
     async suggest(keyword) { if(this.preview)return this.proxy('suggest',[keyword]);await this.warm();const result=await this.native('/subject-api/search-suggest',{keyword:keyword,perPage:10,resultMode:0});return result.items||[]; }
     async detail(subject) {

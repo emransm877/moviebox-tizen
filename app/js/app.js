@@ -85,7 +85,51 @@
   }
 
   function renderHero(subject) { $('hero').hidden = !subject; if (!subject) return; $('hero-title').textContent = subject.title; $('hero-description').textContent = subject.description || 'A little escape. An unforgettable story. Discover something worth watching.'; var url = image(subject,'stills',960) || image(subject,'cover',960); $('hero-art').style.backgroundImage = url ? 'url("' + url.replace(/["\\\n\r]/g,'') + '")' : ''; $('hero-watch').onclick = function () { returnFocus = $('hero-watch'); openDetail(subject); }; }
-  function browse(name) { generation++; if (player.active) player.stop(); showPage('browse'); setNav(name); $('search-panel').hidden = name !== 'search'; $('more-button').hidden = true; moreAvailable = false; $('catalog-kicker').textContent = name === 'home' ? 'A WORLD OF STORIES' : 'YOUR MOVIEBOX'; $('catalog-title').textContent = {home:'Discover',search:'Search',history:'Continue watching',saved:'My list'}[name] || 'Discover'; $('section-kicker').textContent = name === 'home' ? 'YOUR NEXT GREAT STORY' : 'EVERY STORY, IN YOUR OWN TIME'; renderHero(name === 'home' ? homeTitles[0] : null); if (name === 'home') { if (homeTitles.length) renderCatalog(homeTitles); else loadHome(); } else if (name === 'history') renderCatalog(Object.keys(state.history).map(function (k) { return state.history[k]; }).sort(function (a,b) { return b.updated - a.updated; }).map(function (entry) { return entry.subject; }).filter(Boolean)); else if (name === 'saved') renderCatalog(Object.keys(state.saved).map(function (id) { return state.saved[id]; })); else { renderCatalog([]); $('empty-state').hidden = true; $('search-input').focus(); } }
+  var cataloguePage = 1, catalogueNextPage = 2, catalogueBusy = false, catalogueRequest = 0, catalogueSelected = {}, catalogueCache = {};
+  function isCatalogue() { return route === 'movies' || route === 'tv'; }
+  function configureFilters(kind) {
+    var schema = global.MovieBoxCatalogue.schema.channels[kind], remembered = (state.catalogueFilters || {})[kind] || {};
+    $('catalogue-filter-fields').textContent = '';
+    schema.filters.concat([{key:'minRating',label:'Minimum rating',options:[{value:'',label:'Any rating'},{value:'6',label:'6+'},{value:'7',label:'7+'},{value:'8',label:'8+'},{value:'9',label:'9+'}]}]).forEach(function (field) {
+      var label = document.createElement('label'); label.textContent = field.label;
+      var select = document.createElement('select'); select.id = 'filter-' + field.key; select.dataset.filter = field.key; select.setAttribute('aria-label',field.label);
+      field.options.forEach(function (option) { select.add(new Option(option.value === 'ForYou' ? 'For you' : option.label,option.value)); });
+      if (field.options.some(function (option) { return option.value === remembered[field.key]; })) select.value = remembered[field.key];
+      label.appendChild(select); $('catalogue-filter-fields').appendChild(label);
+    });
+    catalogueSelected = readFilters();
+  }
+  function readFilters() { var filters = {}; Array.prototype.forEach.call($('catalogue-filter-fields').querySelectorAll('select'),function (select) { filters[select.dataset.filter] = select.value; }); return filters; }
+  function loadCatalogue(append, retry) {
+    if (!isCatalogue() || (catalogueBusy && append)) return;
+    var kind = route, epoch = generation, request = ++catalogueRequest;
+    if (!append) { cataloguePage = 1; moreAvailable = false; $('more-button').hidden = true; catalogueSelected = readFilters(); state.catalogueFilters = state.catalogueFilters || {}; state.catalogueFilters[kind] = catalogueSelected; persist(); empty('Loading matching titles…'); }
+    else cataloguePage = catalogueNextPage;
+    var page = cataloguePage, selected = Object.assign({},catalogueSelected), cacheKey = kind + ':' + JSON.stringify(selected) + ':' + page;
+    catalogueBusy = true; $('apply-filters').setAttribute('aria-busy','true'); $('catalogue-status').textContent = 'Loading…'; $('more-button').disabled = true;
+    var cached = catalogueCache[cacheKey], promise = !retry && cached && Date.now() - cached.at < 60000 ? Promise.resolve(cached.result) : api.catalogue(kind,selected,page);
+    promise.then(function (result) {
+      if (epoch !== generation || request !== catalogueRequest || route !== kind) return;
+      catalogueCache[cacheKey] = {at:Date.now(),result:result}; Object.keys(catalogueCache).slice(0,-12).forEach(function (key) { delete catalogueCache[key]; });
+      var titles = allSubjects(result).filter(function (subject) { return number(subject.subjectType) === (kind === 'movies' ? 1 : 2); });
+      moreAvailable = result.hasMore === true || result.hasMore === 1; catalogueNextPage = Math.max(page + 1,number(result.nextPage));
+      renderCatalog(titles,append); if (!titles.length && !append) empty('No titles match these filters. Try another year, country or genre.');
+      $('catalogue-status').textContent = lastCatalog.length + ' titles loaded' + (moreAvailable ? ' · More available' : '');
+    }).catch(function () { if (epoch === generation && request === catalogueRequest) { $('catalogue-status').textContent = 'Could not load this selection. Please try again.'; if (!append) empty('Could not load the catalogue. Your saved titles are unchanged.'); } }).then(function () { if (request === catalogueRequest) { catalogueBusy = false; $('apply-filters').removeAttribute('aria-busy'); $('more-button').disabled = false; navigation.invalidate(); } });
+  }
+  function browse(name) {
+    generation++; catalogueRequest++; catalogueBusy = false;
+    if (player.active) player.stop(); showPage('browse'); setNav(name);
+    $('search-panel').hidden = name !== 'search'; $('catalogue-filters').hidden = !isCatalogue(); $('more-button').hidden = true; $('more-button').disabled = false; moreAvailable = false;
+    $('catalog-kicker').textContent = name === 'home' ? 'A WORLD OF STORIES' : 'YOUR MOVIEBOX';
+    $('catalog-title').textContent = {home:'Discover',movies:'Movies',tv:'TV Shows',search:'Search',history:'Continue watching',saved:'My list'}[name] || 'Discover';
+    $('section-kicker').textContent = name === 'home' ? 'YOUR NEXT GREAT STORY' : 'EVERY STORY, IN YOUR OWN TIME'; renderHero(name === 'home' ? homeTitles[0] : null);
+    if (isCatalogue()) { configureFilters(name); loadCatalogue(false); }
+    else if (name === 'home') { if (homeTitles.length) renderCatalog(homeTitles); else loadHome(); }
+    else if (name === 'history') renderCatalog(Object.keys(state.history).map(function (key) { return state.history[key]; }).sort(function (a,b) { return b.updated - a.updated; }).map(function (entry) { return entry.subject; }).filter(Boolean));
+    else if (name === 'saved') renderCatalog(Object.keys(state.saved).map(function (id) { return state.saved[id]; }));
+    else { renderCatalog([]); $('empty-state').hidden = true; $('search-input').focus(); }
+  }
   function loadHome() { var epoch = generation; empty('Loading the latest stories…'); $('retry-button').hidden = true; api.home().then(function (result) { if (epoch !== generation) return; homeTitles = allSubjects(result).slice(0,180); renderHero(homeTitles[0]); renderCatalog(homeTitles); $('retry-button').hidden = false; if (!homeTitles.length) empty('The catalog is empty right now. Please try again.'); }).catch(function () { if (epoch === generation) { empty('Could not load MovieBox. Check the TV’s internet connection, then try again.'); $('retry-button').hidden = false; } }); }
   function search(append) { var query = $('search-input').value.trim(); if (!query) return; if (!append) { generation++; searchPage = 1; searchWord = query; $('suggestions').textContent = ''; } var epoch = generation, page = searchPage; $('catalog-title').textContent = 'Results for “' + query + '”'; $('more-button').disabled = true; api.search(query,page).then(function (result) { if (epoch !== generation || query !== searchWord) return; var titles = allSubjects(result); moreAvailable = result.hasMore === true || result.hasMore === 1 || titles.length >= 30; renderCatalog(titles,append); $('more-button').disabled = false; if (!append) navigation.focus($('catalog').querySelector('button')); }).catch(function () { if (epoch === generation) { toast('Search could not complete. Please try again.'); $('more-button').disabled = false; } }); }
   function suggest() { var query = $('search-input').value.trim(); if (query.length < 2) { $('suggestions').textContent = ''; return; } api.suggest(query).then(function (items) { if ($('search-input').value.trim() !== query || route !== 'search') return; $('suggestions').textContent = ''; (items || []).slice(0,8).forEach(function (item) { var word = item.word || item.title || item.subject && item.subject.title; if (!word) return; var button = document.createElement('button'); button.className = 'secondary'; button.textContent = word; button.setAttribute('role','option'); button.onclick = function () { $('search-input').value = word; $('suggestions').textContent = ''; if (item.subject && item.subject.subjectId) openDetail(item.subject); else search(false); }; $('suggestions').appendChild(button); }); }).catch(function () {}); }
@@ -168,8 +212,10 @@
   $('clear-subtitle-cache').onclick = function () { player.cache.clear().then(function () { toast('Downloaded subtitles cleared. They will download again when needed.'); }); };
   $('search-input').addEventListener('input',function () { clearTimeout(searchTimer); searchTimer = setTimeout(suggest,280); });
   $('search-go').onclick = function () { search(false); };
-  $('more-button').onclick = function () { if (catalogDisplayed < lastCatalog.length) renderCatalogBatch(); else if (route === 'search') { searchPage++; search(true); } };
-  $('retry-button').onclick = function () { if (route === 'home') loadHome(); else if (route === 'search') search(false); };
+  $('more-button').onclick = function () { if (catalogDisplayed < lastCatalog.length) renderCatalogBatch(); else if (isCatalogue()) loadCatalogue(true); else if (route === 'search') { searchPage++; search(true); } };
+  $('apply-filters').onclick = function () { if (isCatalogue()) { generation++; loadCatalogue(false); } };
+  $('reset-filters').onclick = function () { if (!isCatalogue()) return; state.catalogueFilters = state.catalogueFilters || {}; state.catalogueFilters[route] = {}; configureFilters(route); generation++; loadCatalogue(false); };
+  $('retry-button').onclick = function () { if (route === 'home') loadHome(); else if (isCatalogue()) loadCatalogue(false,true); else if (route === 'search') search(false); };
   $('detail-back').onclick = function () { generation++; showPage('browse'); navigation.focus(returnFocus && returnFocus.isConnected ? returnFocus : document.querySelector('[data-nav="' + route + '"]')); };
   $('season-select').onchange = function () { populateEpisodes(); };
   $('watch-button').onclick = watch;

@@ -2,7 +2,7 @@
 const assert=require('node:assert/strict'),crypto=require('node:crypto'),fs=require('node:fs'),vm=require('node:vm'),path=require('node:path');
 const context=vm.createContext({TextEncoder,Uint8Array,crypto:crypto.webcrypto,URL,URLSearchParams,Map,Set,
   atob:s=>Buffer.from(s,'base64').toString('binary'),btoa:s=>Buffer.from(s,'binary').toString('base64'),location:{protocol:'file:'},Intl,tizen:{}});
-for(const name of ['crypto.js','api.js'])vm.runInContext(fs.readFileSync(path.join(__dirname,'../app/js',name),'utf8'),context);
+for(const name of ['crypto.js','catalogue.js','api.js'])vm.runInContext(fs.readFileSync(path.join(__dirname,'../app/js',name),'utf8'),context);
 for(const text of ['', 'abc', 'MovieBox 🎬', 'a'.repeat(1000)])assert.equal(context.MovieBoxCrypto.md5(text),crypto.createHash('md5').update(text).digest('hex'));
 for(const key of [Buffer.from('key'),Buffer.alloc(90,7)])assert.equal(Buffer.from(context.MovieBoxCrypto.hmac(key,'test payload')).toString('hex'),crypto.createHmac('md5',key).update('test payload').digest('hex'));
 (async()=>{
@@ -15,6 +15,12 @@ for(const key of [Buffer.from('key'),Buffer.alloc(90,7)])assert.equal(Buffer.fro
  const key=Buffer.from('76iRl07s0xSN9jqmEWAt79EBJZulIQIsV64FZr2O','base64');
  assert.equal(captured.headers['x-tr-signature'],ts+'|2|'+crypto.createHmac('md5',key).update(payload).digest('base64'));
  api.warm=async()=>{};
+ const body=context.MovieBoxCatalogue.body('movies',{genre:'Action',country:'India',year:'2024',sort:'Rating',minRating:'8'},2);
+ assert.equal(body.channelId,1);assert.equal(body.page,2);assert.equal(body.perPage,12);assert.equal(body.genre,'Action');assert.equal(body.country,'India');assert.equal(body.year,'2024');assert.equal(JSON.stringify(body.rate),'["8","10"]');
+ assert.equal(context.MovieBoxCatalogue.body('tv',{},1).channelId,2);
+ assert.throws(()=>context.MovieBoxCatalogue.body('movies',{genre:'invented'},1));
+ let catalogueRequest;api.web=async(path,params)=>{catalogueRequest={path,params};return {items:[],pager:{hasMore:true,nextPage:'3'}};};
+ const catalogue=await api.catalogue('tv',{year:'2024'},2);assert.equal(catalogueRequest.path,'/subject/filter');assert.equal(catalogueRequest.params.channelId,2);assert.equal(catalogue.hasMore,true);assert.equal(catalogue.nextPage,3);
  let requests=[];
  api.native=async(route,params)=>{requests.push(params);return {resolution:0,collectionResolutions:[{resolution:2160,requireMemberType:1}],list:[
   {resourceId:'sd',resourceLink:'https://example.invalid/sd',resolution:480,size:200000000,duration:7200,se:0,ep:0},

@@ -32,6 +32,7 @@ webapis.avplay.setSelectTrack=function(type,index){nativeAudioIndex=index;__avca
 window.MovieBoxAPI=function(){this.streamUserAgent='MovieBoxTV/test';};
 MovieBoxAPI.prototype.home=function(){return Promise.resolve({operatingList:[{subjects:[movie,series]}]});};
 MovieBoxAPI.prototype.search=function(q){return Promise.resolve({items:q.toLowerCase().includes('series')?[series]:[movie]});};
+MovieBoxAPI.prototype.catalogue=function(kind,filters,page){window.__catalogueCalls=window.__catalogueCalls||[];__catalogueCalls.push({kind:kind,filters:filters,page:page});var sample=kind==='movies'?movie:series;return Promise.resolve({items:Array.from({length:12},function(_,i){return Object.assign({},sample,{subjectId:kind+'-'+page+'-'+i,title:(filters.genre==='All'?'':filters.genre+' ')+sample.title+' '+page+'-'+i});}),hasMore:page<2,nextPage:page+1});};
 MovieBoxAPI.prototype.suggest=function(q){return Promise.resolve([{word:q+' movie'},{word:'The Test Series',subject:series}]);};
 MovieBoxAPI.prototype.detail=function(s){return Promise.resolve({subject:s,isSeries:s.subjectType===2,resource:{seasons:s.subjectType===2?[{se:1,maxEp:65},{se:2,maxEp:8}]:[{se:0,maxEp:1}]}});};
 MovieBoxAPI.prototype.playback=function(s,se,ep){return Promise.resolve([{url:'https://fixture.invalid/'+s.subjectId+'/'+se+'/'+ep+'/1080.mp4',resolutions:1080,size:30000000,duration:s.subjectId==='series-hi'||s.subjectId==='series-cut'?40:100,id:'1080',headers:{'User-Agent':'MovieBoxTV/test'}},{url:'https://fixture.invalid/'+s.subjectId+'/'+se+'/'+ep+'/low.mp4',resolutions:s.subjectId==='series-hi'?720:480,size:10000000,duration:s.subjectId==='series-cut'?40:100,id:'low'}]);};
@@ -78,6 +79,10 @@ def run():
             page.locator('.poster-card').first.wait_for()
             assert page.locator('.poster-card').count()==2
             page.locator('[data-nav=home]').focus()
+            page.keyboard.press('ArrowDown')
+            assert page.evaluate('document.activeElement.dataset.nav')=='movies'
+            page.keyboard.press('ArrowDown')
+            assert page.evaluate('document.activeElement.dataset.nav')=='tv'
             page.keyboard.press('ArrowDown')
             assert page.evaluate('document.activeElement.dataset.nav')=='search'
             checks['remote_navigation_between_sidebar_items']=True
@@ -346,6 +351,43 @@ def run():
             page.wait_for_function('window.MovieBoxTV && Object.keys(MovieBoxTV.state.saved).length>0')
             assert page.evaluate('Object.keys(MovieBoxTV.state.saved).sort()')==saved_ids
             checks['damaged_primary_library_recovers_my_list_from_backup']=True
+            page.locator('[data-nav=movies]').click()
+            page.wait_for_function('document.querySelectorAll(".poster-card").length===12')
+            assert page.locator('#catalogue-filter-fields select').count()==6
+            assert page.evaluate('MovieBoxTV.allSubjects({items:[]}).length')==0
+            remote_pick('#filter-genre','Action')
+            remote_pick('#filter-country','India')
+            remote_pick('#filter-year','2024')
+            page.locator('#filter-sort').select_option('Rating')
+            page.locator('#filter-minRating').select_option('8')
+            assert page.evaluate('__catalogueCalls.length')==1
+            page.locator('#apply-filters').click()
+            page.wait_for_function('__catalogueCalls.length===2 && document.getElementById("catalogue-status").textContent.includes("12 titles")')
+            request=page.evaluate('__catalogueCalls[1]')
+            assert request['kind']=='movies' and request['filters']['genre']=='Action' and request['filters']['country']=='India' and request['filters']['year']=='2024' and request['filters']['minRating']=='8'
+            assert page.locator('.poster-title').first.inner_text().startswith('Action')
+            checks['movie_filters_apply_together_through_remote_without_changing_my_list']=True
+            page.locator('#more-button').click()
+            page.wait_for_function('document.querySelectorAll(".poster-card").length===24')
+            assert page.evaluate('__catalogueCalls[2].page')==2
+            checks['catalogue_requests_real_next_page']=True
+            page.locator('[data-nav=tv]').click()
+            page.wait_for_function('__catalogueCalls.at(-1).kind==="tv" && document.querySelectorAll(".poster-card").length===12')
+            assert page.locator('#catalog-title').inner_text()=='TV Shows'
+            assert page.locator('#filter-genre').input_value()=='All'
+            page.locator('[data-nav=movies]').click()
+            page.wait_for_function('document.getElementById("filter-genre").value==="Action"')
+            assert page.locator('#filter-country').input_value()=='India'
+            page.locator('#reset-filters').click()
+            page.wait_for_function('document.getElementById("filter-genre").value==="All" && document.getElementById("catalogue-status").textContent.includes("12 titles")')
+            assert page.evaluate('Object.keys(MovieBoxTV.state.saved).sort()')==saved_ids
+            checks['movies_tv_separate_choices_and_reset_keep_saved_titles']=True
+            page.locator('#filter-country').focus()
+            page.keyboard.press('Enter')
+            for _ in range(22): page.keyboard.press('ArrowDown')
+            assert page.evaluate('(function(){var a=document.activeElement.getBoundingClientRect(),b=document.querySelector(".remote-picker-options").getBoundingClientRect();return a.top>=b.top-1&&a.bottom<=b.bottom+1;})()')
+            page.keyboard.press('Escape')
+            checks['long_remote_picker_keeps_focused_option_visible']=True
             # A large home feed is rendered in bounded batches, not 180 poster nodes.
             perf=browser.new_page(viewport={'width':1920,'height':1080})
             large_stub=STUB+"\nMovieBoxAPI.prototype.home=function(){return Promise.resolve({items:Array.from({length:180},function(_,i){return Object.assign({},movie,{subjectId:'perf'+i,title:'Performance title '+i,cover:{url:poster,thumbnail:poster+'#thumbnail'}});})});};"
@@ -364,6 +406,17 @@ def run():
             assert metrics['metrics']['cacheHits']>=50
             assert metrics['metrics']['layoutBuilds']<12
             checks['navigation_reuses_cached_focus_bounds']=True
+            for _ in range(3): perf.locator('#more-button').click()
+            perf.evaluate('MovieBoxTV.navigation.focus(document.querySelector(".poster-card:last-child"));')
+            assert perf.evaluate('document.getElementById("main-content").scrollTop')>0
+            for _ in range(100): perf.keyboard.press('ArrowUp')
+            assert perf.evaluate('document.getElementById("main-content").scrollTop')==0
+            assert perf.evaluate('document.activeElement.closest("#main-content")!==null')
+            checks['remote_up_returns_all_the_way_to_page_top']=True
+            perf.locator('.poster-card').first.focus()
+            perf.wait_for_timeout(200)
+            assert perf.evaluate('new DOMMatrixReadOnly(getComputedStyle(document.querySelector(".poster-card")).transform).a')>1
+            checks['focused_poster_enlarges_with_short_composited_transition']=True
             result['desktop_browser_navigation_p95_ms']=round(metrics['p95'],3)
             result['desktop_browser_navigation_max_ms']=round(metrics['max'],3)
             result['navigation_metrics']=metrics['metrics']
@@ -385,6 +438,27 @@ def run():
             assert all('existing=kept' in url for url in artwork_requests)
             checks['oversized_artwork_is_resized_before_request_or_decode']=True
             art.close()
+            native_art=browser.new_page(viewport={'width':1920,'height':1080})
+            native_art.route('**/js/api.js',lambda route: route.fulfill(status=200,content_type='text/javascript',body=STUB+"\nmovie.cover={url:'https://pbcdnw.aoneroom.com/image/native.jpg',thumbnail:'e76tt7xa0LIpt6IUWCtRoekCNdR+xYxZayR+j@s.j[juRjjZofWXt6',width:6750,height:6750};series.cover=movie.cover;"))
+            native_art.route('**/$WEBAPIS/**',lambda route: route.fulfill(status=200,content_type='text/javascript',body=''))
+            native_art.route('https://pbcdnw.aoneroom.com/**',lambda route: route.fulfill(status=200,content_type='image/svg+xml',body='<svg xmlns="http://www.w3.org/2000/svg" width="300" height="450"><rect width="300" height="450" fill="#194d40"/></svg>'))
+            native_art.goto('http://127.0.0.1:%d/' % server.server_port)
+            native_art.locator('.poster-card').first.click()
+            native_art.wait_for_function('document.getElementById("detail-poster").naturalWidth>0 && !document.getElementById("save-button").disabled')
+            assert 'x-oss-process=' in native_art.locator('#detail-poster').get_attribute('src')
+            checks['native_blurhash_detail_uses_real_cover_url']=True
+            native_art.locator('#save-button').click()
+            native_art.locator('[data-nav=saved]').click()
+            native_art.wait_for_function('document.querySelector(".poster-card img")?.naturalWidth>0')
+            checks['native_blurhash_my_list_retains_and_renders_cover']=True
+            native_art.locator('[data-nav=search]').click()
+            native_art.locator('#search-input').fill('Movie')
+            native_art.locator('#search-go').click()
+            native_art.wait_for_function('document.querySelector(".poster-card img")?.naturalWidth>0')
+            assert native_art.evaluate('MovieBoxArtwork.metrics.ignoredPlaceholders')>0
+            checks['native_blurhash_search_results_render_cover']=True
+            native_art.screenshot(path=str(OUTPUT/'native-search-artwork.png'))
+            native_art.close()
             assert not errors, errors
             checks['no_javascript_exceptions']=True
             result['passed']=True

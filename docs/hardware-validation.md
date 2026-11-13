@@ -51,3 +51,16 @@ permission are absent from the public widget and final installed build.
 Native keyboard presentation and every possible title, codec, audio edition and
 network condition are not certified by these samples. Other TV models require
 their own testing. The project does not claim equivalence to YouTube's implementation.
+## 0.4.0 catalogue, artwork and scrolling validation
+
+Date: 2026-11-14. Same Samsung U8000F / Tizen 9.0 target.
+
+- Actual native search returned ten visible covers, all decoded at 300 pixels wide.
+- The new Movies channel loaded twelve covers at 300 pixels wide; a native detail
+  image decoded at 360 by 540 pixels. My list was empty on this TV; its artwork
+  regression is covered by the browser fixture rather than a hardware claim.
+- Starting at scroll offset 521, controlled Up events returned the content scroll
+  offset to zero while focus remained inside the content region.
+- 62 browser checks pass with explicitly mocked AVPlay, including catalogue
+  filters, BlurHash artwork, long option lists, scroll-to-top and poster scaling.
+- The final 0.4.0 widget was signed, installed and launched without diagnostics.

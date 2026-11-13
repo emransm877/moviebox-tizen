@@ -42,6 +42,13 @@ def make_server(port=8765, desktop=None):
                         raise ValueError('Only service subtitle URLs are allowed in preview')
                     with urlopen(Request(url, headers={'User-Agent': api.native.user_agent}), timeout=15) as response:
                         result = response.read(4 * 1024 * 1024).decode('utf-8-sig', errors='replace')
+                elif method == 'catalogue':
+                    from browse_filters import BrowseCatalogue
+                    if args[0] not in ('movies','tv'): raise ValueError('Choose Movies or TV Shows')
+                    selection = dict(args[1]); rating = selection.pop('minRating', '')
+                    if rating: selection['rate'] = rating
+                    data = BrowseCatalogue(api).page('series' if args[0] == 'tv' else 'movies',selection,args[2])
+                    result = {'items':data['items'],'hasMore':data['has_more'],'nextPage':data['next_page']}
                 elif method in ('home', 'search', 'suggest', 'detail', 'playback', 'captions'):
                     result = getattr(api, method)(*args)
                     if method == 'playback':

@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.4.0
+
+- Fix missing covers in search, My list and details by distinguishing the native
+  API's BlurHash placeholder strings from actual thumbnail URLs.
+- Add separate live Movies and TV Shows catalogue channels, combined year,
+  genre, country, language/edition, sort and minimum-rating filters and pagination.
+- Keep remote-friendly Apply/Reset controls and separate saved filter choices.
+- Fix Up-arrow navigation getting trapped below the page header, and keep focused
+  options visible inside long filter pickers.
+- Add a short, composited 4.5% poster focus/hover enlargement and accent highlight.
+- Retain bounded, resized poster loading and the responsiveness/seek fixes.
+- Audit prior requests and clearly record remaining parity and validation gaps.
+
 ## 0.3.0
 
 - Resize allowlisted service artwork at the CDN before decoding: 300 px posters,
