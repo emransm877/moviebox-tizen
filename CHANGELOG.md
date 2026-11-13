@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.5.0 — 2026-11-14
+
+- Add five live Settings themes: Obsidian Cinema, Orbital, Prism, Aurora and Eclipse. Save the choice across launches; refresh surfaces, focus accents, hero styling and navigation without changing playback or library data.
+- Add a shuffled latest movies + TV slideshow, up to 50 of each (100 unique titles), with previous/next/pause, an accurate count, and exact active-title Watch/More info actions.
+- Load bounded metadata in the background and only active-slide artwork. Pause automatic rotation while interacting, in other views, during playback or when hidden.
+- Preserve the existing catalogue, filters, library, audio, captions, quality, fullscreen, remote/keyboard input and optional update features.
+
+
 ## 0.4.0
 
 - Fix missing covers in search, My list and details by distinguishing the native

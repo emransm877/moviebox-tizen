@@ -64,3 +64,15 @@ Date: 2026-11-14. Same Samsung U8000F / Tizen 9.0 target.
 - 62 browser checks pass with explicitly mocked AVPlay, including catalogue
   filters, BlurHash artwork, long option lists, scroll-to-top and poster scaling.
 - The final 0.4.0 widget was signed, installed and launched without diagnostics.
+## 0.5.0 themes and latest-title spotlight
+
+Date: 2026-11-14. Samsung U8000F / Tizen 9.0.
+
+All five theme selections were applied through the settings change handler on
+the actual TV. The live carousel contained 100 unique title records, with 50
+movies and 50 TV shows, and continued rotating. No JavaScript error/rejection
+was reported in the bounded samples. The original theme was restored afterwards.
+The 62 previous browser checks still pass; 13 additional theme/carousel checks
+exercise exact active-slide actions, remote navigation, persistence and native
+source preservation with explicitly mocked AVPlay. These do not certify every
+upstream title or model. The release widget excludes private diagnostics.

@@ -101,6 +101,18 @@
       var candidate = forward + sideways * 2.5 + (sideways > forward * 1.4 ? 800 : 0);
       if (candidate < score) { score = candidate; best = entry.element; }
     });
+    // Horizontal theme navigation needs a vertical bridge to the content below it.
+    var header = document.querySelector('.sidebar');
+    if (!best && !horizontal && header && header.getBoundingClientRect().width > innerWidth * .8 &&
+        ((main && !positive && main.scrollTop <= 1) || (sidebar && positive))) {
+      entries.forEach(function (entry) {
+        if (entry.element === active || (main ? !header.contains(entry.element) : !entry.element.closest('#main-content'))) return;
+        var dy = entry.y - cy;
+        if ((positive && dy < 8) || (!positive && dy > -8)) return;
+        var candidate = Math.abs(dy) + Math.abs(entry.x - cx) * 2.5;
+        if (candidate < score) { score = candidate; best = entry.element; }
+      });
+    }
     if (best) this.focus(best);
     else if (!horizontal && main) { var edge = positive ? Math.max(0,main.scrollHeight - main.clientHeight) : 0; if (main.scrollTop !== edge) { main.scrollTop = edge; this.invalidate(); } }
     this.metrics.lastMoveMs = Math.round((performance.now() - started) * 100) / 100;

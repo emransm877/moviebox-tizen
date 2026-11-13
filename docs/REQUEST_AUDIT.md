@@ -32,8 +32,8 @@ This is an evidence checklist, not a claim of complete Android feature parity.
 
 ## Still pending, unavailable or not fully verified
 
-- The three futuristic UI concepts were presented, but no direction has been
-  selected and applied. The production interface is still the existing design.
+- Five concept-inspired themes are implemented as live Settings choices; real
+  catalogue content replaces fictional preview artwork. See THEMES_AND_SPOTLIGHT.md.
 - A service cannot supply 1080p or subtitles for every title. Available editions,
   membership restrictions and upstream track availability remain authoritative.
   Embedded/burned-in text cannot be disabled with a subtitle-track setting.
@@ -51,3 +51,7 @@ This is an evidence checklist, not a claim of complete Android feature parity.
   seek overlays are delayed; genuine network buffering can still occur.
 
 These outstanding items are intentionally listed separately from completed fixes.
+
+## Theme and spotlight update
+
+Five selectable, persistent themes and a shuffled latest-movies/TV carousel are implemented. Existing feature regression suites are retained. See [theme and spotlight behavior](THEMES_AND_SPOTLIGHT.md).
