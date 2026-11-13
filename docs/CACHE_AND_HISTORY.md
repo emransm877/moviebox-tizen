@@ -9,3 +9,5 @@ Continue watching has a **Select titles** mode with individual selection, **Sele
 The title detail layout places actions after the synopsis for movies, and after season controls for TV shows. Poster proportions, episodes and all previous playback/theme features are retained.
 
 Validation uses actual Qt controls and isolated fixture libraries, headless TV remote tests with mocked AVPlay, cache disk/page reload checks, and the previous regression suites. Tests do not remove production history. Network availability and every upstream title/device remain outside those bounded checks.
+
+For very long catalogues the cache retains complete pages up to its metadata budget (240 titles on desktop, 120 on TV). Further loaded pages remain usable in the current view; after returning, Load more resumes at the first uncached page. Those later pages are never skipped by a truncated cache cursor.

@@ -58,8 +58,10 @@ try:
   page.locator('#history-done').click();page.reload();page.locator('.poster-card').first.wait_for()
   assert page.evaluate('Object.keys(MovieBoxTV.state.history).length')==3
   checks['undo_clear_selection_and_history_survive_reload']=True
+  assert page.evaluate("(()=>{var c=Object.create(MovieBoxCatalogueCache.prototype);c.entries={};c.timer=1;var items=Array.from({length:120},(_,i)=>({subjectId:String(i),title:'Title'}));c.put('budget',{items:items,at:Date.now(),page:10,nextPage:11,hasMore:true});c.put('budget',{items:items.concat([{subjectId:'next',title:'Next'}]),at:Date.now(),page:11,nextPage:12,hasMore:false});return c.get('budget').nextPage===11&&c.get('budget').hasMore;})()")
+  checks['cache_budget_does_not_skip_uncached_pages']=True
   assert not errors,errors;checks['no_javascript_exceptions']=True
   browser.close()
 finally:
- server.shutdown();result={'scope':'Headless Edge, fixture service, mocked AVPlay.','checks':checks,'passed':len(checks)==7 and not errors}
+ server.shutdown();result={'scope':'Headless Edge, fixture service, mocked AVPlay.','checks':checks,'passed':len(checks)==8 and not errors}
  (OUT/'result.json').write_text(json.dumps(result,indent=2),encoding='utf-8');print(json.dumps(result,indent=2))

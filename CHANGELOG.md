@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.6.1 — 2026-11-14
+
+- Retain the last fully cached page boundary when a long catalogue exceeds the metadata budget. Returning to that view resumes Load more at the first uncached page, without skipping results.
+
 ## 0.6.0 — 2026-11-14
 
 - Cache Movies/TV Shows metadata and loaded pages by filters across visits and restarts. Show cached results immediately, check stale data in the background, and preserve position when unchanged.
