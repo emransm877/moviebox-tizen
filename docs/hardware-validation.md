@@ -1,5 +1,28 @@
 # Hardware validation
 
+## 0.3.0 follow-up: 2026-11-14
+
+Measured on the same U8000F / Tizen 9.0 using private, excluded diagnostics:
+
+| Check | Observed result |
+|---|---|
+| Startup main-thread task | Previous build: 4,574 ms maximum; candidate: 140 ms in the measured launch |
+| Artwork | Previously observed 6,750 × 6,750 source image; candidate poster images decoded at 300 px wide |
+| Catalog | 12 initial posters rather than 36; 252 document nodes in the candidate sample versus 376 |
+| Controlled navigation | Ten injected arrow events: max movement work 4.7 ms; max complete handler 7.1 ms; event delay at most 0.7 ms in that run |
+| Native buffer policy | Actual AVPlay accepted four-second play/resume targets in IDLE |
+| Seeking | Three Right presses and one Left press coalesced into one native seek, confirmed in 853 ms; 1080p retained, no native error |
+| Long-term playback | Native clock continued and loading indicator was hidden in subsequent samples |
+
+These are bounded observations on one device, not a universal latency guarantee.
+Network/cache conditions were not held constant. Injected events exercise actual
+TV application handlers and AVPlay, but do not certify physical remote transport
+latency. The UI can remain responsive while media still needs network data.
+Brief seek buffering indicators are delayed; persistent buffering remains visible.
+The final installed/public build excludes this diagnostic endpoint and scripts.
+
+## Original 0.2.1 validation
+
 Date: 2026-11-13. Target: Samsung UA43U8000FRSER (43-inch U8000F), Tizen 9.0.
 
 | Check | Evidence and result |

@@ -20,6 +20,7 @@ var poster='data:image/svg+xml,'+encodeURIComponent('<svg xmlns="http://www.w3.o
 var movie={subjectId:'movie1',subjectType:1,title:'The Test Movie',releaseDate:'2026-01-01',description:'A fixture movie used to check the actual rendered TV interface and keyboard navigation.',cover:{url:poster},genre:'Adventure',hasResource:true};
 var series={subjectId:'series1',subjectType:2,title:'The Test Series',releaseDate:'2025-01-01',description:'A fixture series with multiple seasons and episodes beyond the first twenty.',cover:{url:poster},hasResource:true};
 series.dubs=[{subjectId:'series1',type:0,lanCode:'en',lanName:'English dub'},{subjectId:'series-hi',type:0,lanCode:'hi',lanName:'Hindi dub'},{subjectId:'series-cut',type:0,lanCode:'fr',lanName:'Different runtime'},{subjectId:'series-ar-sub',type:1,lanCode:'ar',lanName:'Arabic sub'}];
+webapis.avplay.setBufferingParam=function(option,unit,value){if(nativeState!=='IDLE')throw new Error('Buffer policy must be set in IDLE');__avcalls.push(['bufferPolicy',option,unit,value]);};
 var originalOpen=webapis.avplay.open;webapis.avplay.open=function(url){nativeSource=url;nativeAudioIndex=0;originalOpen(url);};
 var originalClose=webapis.avplay.close;webapis.avplay.close=function(){__nativeGeneration++;originalClose();};
 webapis.avplay.prepareAsync=function(ok){__avcalls.push(['prepareAsync']);var generation=__nativeGeneration;setTimeout(function(){if(generation===__nativeGeneration){nativeState='READY';ok();}},__prepareDelay);};
@@ -54,7 +55,12 @@ def run():
             browser = pw.chromium.launch(channel='msedge', headless=True)
             page = browser.new_page(viewport={'width':1920,'height':1080})
             errors=[]
+            github_requests=[]
             page.on('pageerror',lambda error: errors.append(str(error)))
+            def github_release(route):
+                github_requests.append(route.request.url)
+                route.fulfill(status=200,content_type='application/json',headers={'Access-Control-Allow-Origin':'*'},body=json.dumps({'tag_name':'v0.9.0','html_url':'https://github.com/emransm877/moviebox-tizen/releases/tag/v0.9.0'}))
+            page.route('https://api.github.com/repos/emransm877/moviebox-tizen/releases/latest',github_release)
             page.route('**/js/api.js',lambda route: route.fulfill(status=200,content_type='text/javascript',body=STUB))
             page.route('**/$WEBAPIS/**',lambda route: route.fulfill(status=200,content_type='text/javascript',body=''))
             page.goto('http://127.0.0.1:%d/' % server.server_port)
@@ -93,6 +99,7 @@ def run():
             checks['season_change_updates_episode_buttons']=True
             page.locator('#save-button').click()
             assert page.locator('#save-button').inner_text()=='✓ Saved'
+            page.wait_for_function("JSON.parse(localStorage.getItem('moviebox-tv-library') || '{}').saved?.series1")
             checks['saved_list_persists']=page.evaluate("JSON.parse(localStorage.getItem('moviebox-tv-library')).saved.series1.title")=='The Test Series'
             page.evaluate("MovieBoxTV.state.history['series1:1:65']={subject:MovieBoxTV.state.saved.series1,position:64000,duration:100000,updated:Date.now()};")
             page.locator('[data-episode="65"]').focus()
@@ -130,7 +137,7 @@ def run():
             checks['audio_edition_uses_matching_full_runtime_and_replaces_subtitles']=True
             before_calls=page.evaluate('__avcalls.filter(c=>c[0]==="open").length')
             remote_pick('#audio-select','edition:series-cut')
-            page.wait_for_function("document.getElementById('toast').textContent.includes('different runtime')")
+            page.wait_for_function("document.getElementById('toast').textContent.includes('different cut')")
             assert page.evaluate('MovieBoxTV.player.subject.subjectId')=='series-hi'
             assert page.evaluate('__avcalls.filter(c=>c[0]==="open").length')==before_calls
             checks['different_cut_audio_is_rejected_without_interrupting_playback']=True
@@ -198,12 +205,72 @@ def run():
             page.locator('[data-nav=settings]').click()
             assert page.locator('#settings-page').is_visible()
             checks['settings_available']=True
+            page.locator('#check-updates').focus()
+            page.keyboard.press('Enter')
+            page.locator('#update-notice').wait_for()
+            assert page.evaluate('document.activeElement.id')=='check-updates'
+            assert page.locator('#update-title').inner_text()=='MovieBox 0.9.0 is available'
+            original_url=page.url
+            page.locator('#update-download').focus()
+            page.keyboard.press('Enter')
+            assert page.locator('#update-instructions').is_visible()
+            assert page.locator('#update-url').inner_text()=='https://github.com/emransm877/moviebox-tizen/releases/tag/v0.9.0'
+            assert page.url==original_url
+            checks['optional_update_notice_does_not_take_focus_or_auto_navigate']=True
+            page.locator('#update-later').focus()
+            page.keyboard.press('Enter')
+            assert not page.locator('#update-notice').is_visible()
+            assert page.evaluate('MovieBoxTV.releases.preferences.snoozeUntil>Date.now()')
+            page.locator('#check-updates').click()
+            page.locator('#update-notice').wait_for()
+            page.locator('#update-skip').click()
+            assert page.evaluate('MovieBoxTV.releases.preferences.skipped')=='v0.9.0'
+            checks['update_later_and_skip_are_user_controlled']=True
+            page.locator('#optional-updates').focus()
+            page.keyboard.press('Enter')
+            assert page.evaluate('MovieBoxTV.releases.preferences.enabled')==False
+            page.locator('#check-updates').click()
+            page.locator('#update-notice').wait_for()
+            checks['update_settings_disable_auto_checks_but_allow_manual_review']=True
+            page.locator('#update-later').click()
             # Delayed callbacks exercise the asynchronous contract the real TV uses.
             page.locator('[data-nav=home]').click()
             page.locator('.poster-card').nth(1).click()
             page.wait_for_function("document.querySelector('[data-episode=\"1\"]') && !document.getElementById('watch-button').disabled")
             page.locator('[data-episode="1"]').click()
             page.wait_for_function("nativeState==='PLAYING' && !MovieBoxTV.player.preparing")
+            page.evaluate('MovieBoxTV.releases.check(true)')
+            assert not page.locator('#update-notice').is_visible()
+            assert page.evaluate('nativeState')=='PLAYING'
+            checks['update_check_never_blocks_or_overlays_playback']=True
+            persistence=page.evaluate("MovieBoxTV.flushPersistence();var p=MovieBoxTV.player,before=MovieBoxTV.persistenceMetrics.writes;for(var i=0;i<50;i++)p.callbacks.onProgress(1000+i*100,100000);var delayed=MovieBoxTV.persistenceMetrics.writes===before;MovieBoxTV.flushPersistence();({delayed:delayed,writes:MovieBoxTV.persistenceMetrics.writes-before,stored:JSON.parse(localStorage.getItem('moviebox-tv-library'))})")
+            assert persistence['delayed'] and persistence['writes']==1
+            saved_subject=persistence['stored']['history']['series1:1:1']['subject']
+            assert 'dubs' not in saved_subject and 'description' not in saved_subject
+            checks['history_writes_are_compact_and_coalesced_outside_key_handlers']=True
+            caption_mutations=page.evaluate("var p=MovieBoxTV.player;p.cues=[{start:0,end:100000,text:'A stable caption'}];p.position=1000;p.renderCaption();var observer=new MutationObserver(function(){});observer.observe(document.getElementById('subtitle-overlay'),{childList:true,subtree:true});for(var i=0;i<100;i++){p.position=1000+i;p.renderCaption();}var count=observer.takeRecords().length;observer.disconnect();count")
+            assert caption_mutations==0
+            checks['unchanged_subtitle_text_does_not_recreate_dom_nodes']=True
+            assert page.evaluate('MovieBoxAudio.matchingRuntime([{duration:7157}],7160).length')==1
+            for wrong in [1717,6517]:
+                assert page.evaluate('(function(){try{MovieBoxAudio.matchingRuntime([{duration:'+str(wrong)+'}],7160);return false;}catch(error){return error.code==="DIFFERENT_RUNTIME";}})()')
+            checks['audio_tolerates_small_padding_but_rejects_different_cuts']=True
+            assert page.evaluate('MovieBoxTV.player.bufferConfiguration.applied')
+            assert page.evaluate('__avcalls.filter(c=>c[0]==="bufferPolicy").every(c=>c[2]==="PLAYER_BUFFER_SIZE_IN_SECOND" && c[3]===4)')
+            checks['native_buffer_targets_use_supported_four_second_minimum_in_idle']=True
+            page.evaluate('MovieBoxTV.player.loading(false);MovieBoxTV.player.seekGraceUntil=Date.now()+8000;nativeListener.onbufferingstart();nativeListener.onbufferingprogress(40);')
+            page.wait_for_timeout(120)
+            assert page.locator('#player-loading').is_hidden()
+            page.evaluate('nativeListener.onbufferingcomplete();')
+            page.wait_for_timeout(950)
+            assert page.locator('#player-loading').is_hidden()
+            checks['brief_seek_buffer_events_do_not_flash_spinner']=True
+            page.evaluate("MovieBoxTV.player.preference='1080';MovieBoxTV.player.seekGraceUntil=0;nativeListener.onbufferingstart();")
+            page.wait_for_timeout(550)
+            assert page.locator('#player-loading').is_visible()
+            page.evaluate('nativeListener.onbufferingcomplete();')
+            assert page.locator('#player-loading').is_hidden()
+            checks['real_buffer_stalls_remain_visible']=True
             page.evaluate("__seekDelay=250;__seekMaxConcurrent=0;__avcalls=[];nativePosition=10000;MovieBoxTV.player.tick(10000);for(var i=0;i<10;i++)MovieBoxTV.player.skip(1000);")
             assert page.evaluate('MovieBoxTV.player.position')==10000
             assert page.evaluate('MovieBoxTV.player.previewPosition()')==20000
@@ -266,19 +333,32 @@ def run():
             page.evaluate("nativeState='PLAYING';MovieBoxTV.player.buffering();MovieBoxTV.player.buffering();")
             page.wait_for_function('MovieBoxTV.player.stream.resolutions===480')
             checks['genuine_repeated_playback_buffering_still_adapts_quality']=True
+            page.evaluate("MovieBoxTV.state.settings.language='fr';dispatchEvent(new Event('pagehide'));")
+            assert page.evaluate("JSON.parse(localStorage.getItem('moviebox-tv-library')).settings.language")=='fr'
+            checks['lifecycle_flush_preserves_pending_preferences']=True
+            backup=page.evaluate("localStorage.getItem('moviebox-tv-library-backup')")
+            assert backup and 'saved' in __import__('json').loads(backup)
+            checks['saved_library_has_recovery_copy']=True
             page.evaluate('MovieBoxTV.player.stop();')
+            saved_ids=page.evaluate('Object.keys(MovieBoxTV.state.saved).sort()')
+            page.evaluate("MovieBoxTV.flushPersistence();localStorage.setItem('moviebox-tv-library','{damaged');")
+            page.reload()
+            page.wait_for_function('window.MovieBoxTV && Object.keys(MovieBoxTV.state.saved).length>0')
+            assert page.evaluate('Object.keys(MovieBoxTV.state.saved).sort()')==saved_ids
+            checks['damaged_primary_library_recovers_my_list_from_backup']=True
             # A large home feed is rendered in bounded batches, not 180 poster nodes.
             perf=browser.new_page(viewport={'width':1920,'height':1080})
             large_stub=STUB+"\nMovieBoxAPI.prototype.home=function(){return Promise.resolve({items:Array.from({length:180},function(_,i){return Object.assign({},movie,{subjectId:'perf'+i,title:'Performance title '+i,cover:{url:poster,thumbnail:poster+'#thumbnail'}});})});};"
             perf.route('**/js/api.js',lambda route: route.fulfill(status=200,content_type='text/javascript',body=large_stub))
             perf.route('**/$WEBAPIS/**',lambda route: route.fulfill(status=200,content_type='text/javascript',body=''))
             perf.goto('http://127.0.0.1:%d/' % server.server_port)
-            perf.wait_for_function("document.querySelectorAll('.poster-card').length===36")
+            perf.wait_for_function("document.querySelectorAll('.poster-card').length===12")
+            perf.locator('.poster-card img[src]').first.wait_for()
             assert perf.locator('.poster-card img').first.get_attribute('src').endswith('#thumbnail')
             perf.locator('#more-button').focus()
             perf.keyboard.press('Enter')
-            assert perf.locator('.poster-card').count()==72
-            checks['catalog_uses_36_item_batches_and_available_thumbnails']=True
+            assert perf.locator('.poster-card').count()==24
+            checks['catalog_uses_12_item_batches_and_available_thumbnails']=True
             perf.locator('.poster-card').first.focus()
             metrics=perf.evaluate("var n=MovieBoxTV.navigation;n.invalidate();var times=[];for(var i=0;i<50;i++){var start=performance.now();n.move(i%2?'ArrowLeft':'ArrowRight');times.push(performance.now()-start);}times.sort(function(a,b){return a-b;});({metrics:n.metrics,p95:times[47],max:times[49]})")
             assert metrics['metrics']['cacheHits']>=50
@@ -288,6 +368,23 @@ def run():
             result['desktop_browser_navigation_max_ms']=round(metrics['max'],3)
             result['navigation_metrics']=metrics['metrics']
             perf.close()
+            # A metadata-declared 6750px cover must be resized before any request.
+            art=browser.new_page(viewport={'width':1920,'height':1080})
+            artwork_requests=[]
+            art.route('**/js/api.js',lambda route: route.fulfill(status=200,content_type='text/javascript',body=STUB+"\nmovie.cover={url:'https://pbcdnw.aoneroom.com/image/huge.jpg?existing=kept#cover',width:6750,height:6750};"))
+            art.route('**/$WEBAPIS/**',lambda route: route.fulfill(status=200,content_type='text/javascript',body=''))
+            def small_artwork(route):
+                artwork_requests.append(route.request.url)
+                route.fulfill(status=200,content_type='image/svg+xml',body='<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300"><rect width="300" height="300" fill="#194d40"/></svg>')
+            art.route('https://pbcdnw.aoneroom.com/**',small_artwork)
+            art.goto('http://127.0.0.1:%d/' % server.server_port)
+            art.locator('.poster-card img[src]').first.wait_for()
+            art.wait_for_timeout(100)
+            assert artwork_requests
+            assert all('x-oss-process=' in url for url in artwork_requests)
+            assert all('existing=kept' in url for url in artwork_requests)
+            checks['oversized_artwork_is_resized_before_request_or_decode']=True
+            art.close()
             assert not errors, errors
             checks['no_javascript_exceptions']=True
             result['passed']=True

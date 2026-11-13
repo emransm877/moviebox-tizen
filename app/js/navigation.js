@@ -9,13 +9,20 @@
     this.root = document;
     this.picker = null;
     this.dirty = true; this.entries = []; this.cachedItems = [];
-    this.metrics = {layoutBuilds:0,layoutReads:0,cacheHits:0,keyMoves:0,lastMoveMs:0,maxMoveMs:0,focusChanges:0};
+    this.metrics = {layoutBuilds:0,layoutReads:0,cacheHits:0,keyMoves:0,lastMoveMs:0,maxMoveMs:0,focusChanges:0,lastHandlerMs:0,maxHandlerMs:0,lastInputDelayMs:0,maxInputDelayMs:0};
     var self = this;
     this.observer = new MutationObserver(function (changes) { if (changes.some(function (change) { var node = change.target.nodeType === 1 ? change.target : change.target.parentElement; return !node || !node.closest('#subtitle-overlay,#player-clock,#stream-status,#toast'); })) self.invalidate(); });
     global.addEventListener('resize',function () { self.invalidate(); });
     document.addEventListener('scroll',function () { self.invalidate(); },true);
     this.scope(document);
-    this.keydown = this.onKey.bind(this);
+    this.keydown = function (event) {
+      var started = performance.now(), stamp = Number(event.timeStamp);
+      if (stamp > 1000000000000 && performance.timeOrigin) stamp -= performance.timeOrigin;
+      var delay = started - stamp;
+      if (delay >= 0 && delay < 60000) { self.metrics.lastInputDelayMs = Math.round(delay * 100) / 100; self.metrics.maxInputDelayMs = Math.max(self.metrics.maxInputDelayMs,self.metrics.lastInputDelayMs); }
+      try { self.onKey(event); }
+      finally { self.metrics.lastHandlerMs = Math.round((performance.now() - started) * 100) / 100; self.metrics.maxHandlerMs = Math.max(self.metrics.maxHandlerMs,self.metrics.lastHandlerMs); }
+    };
     document.addEventListener('keydown', this.keydown);
     try {
       if (global.tizen && tizen.tvinputdevice) {

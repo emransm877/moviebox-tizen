@@ -1,5 +1,26 @@
 # Changelog
 
+## 0.3.0
+
+- Resize allowlisted service artwork at the CDN before decoding: 300 px posters,
+  960 px hero images and 360 px detail artwork. Render 12 initial posters and
+  request offscreen images only near the viewport.
+- Compact stored title metadata, batch library writes and flush on lifecycle
+  events; index history lookups and avoid repainting unchanged subtitle text.
+- Keep a recovery copy of My list/history and restore it if the primary local
+  record is damaged.
+- Set Samsung's supported four-second start/resume buffer targets, coalesce
+  repeated seeks, update the seek preview immediately and avoid flashing the
+  loading overlay for brief seek buffering; persistent stalls remain visible.
+- Add optional daily GitHub release notices, Later, Skip this version, installation
+  instructions and an automatic-check setting. Updates never block playback or
+  install automatically.
+- Allow small runtime differences (0.1%, bounded to 2–10 seconds) between audio
+  editions. Different cuts require an explicit restart action rather than a
+  silent jump to the same timestamp.
+- Extend browser, update-policy and artwork checks. Actual TV performance is
+  measured separately from browser/mock-AVPlay test results.
+
 ## 0.2.1
 
 - Verify installation and native playback on Samsung U8000F / Tizen 9.0.

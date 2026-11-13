@@ -4,15 +4,15 @@
   function clock(value) { var s = Math.max(0, Math.floor(value / 1000)), h = Math.floor(s / 3600); return (h ? h + ':' : '') + String(Math.floor(s / 60) % 60).padStart(h ? 2 : 1, '0') + ':' + String(s % 60).padStart(2, '0'); }
   function stamp(text) { var bits = text.replace(',', '.').split(':'); if (bits.length === 2) bits.unshift('0'); return Math.round((Number(bits[0]) * 3600 + Number(bits[1]) * 60 + Number(bits[2])) * 1000); }
   function parseSubtitles(text) {
-    var result = [];
+    var result = [], decoder = null;
     text.replace(/^\uFEFF/, '').replace(/\r/g, '').split(/\n\s*\n/).forEach(function (block) {
       var lines = block.split('\n');
       for (var i = 0; i < lines.length; i++) {
         var times = lines[i].match(/([\d:.,]+)\s*-->\s*([\d:.,]+)/);
         if (!times) continue;
         var start = stamp(times[1]), end = stamp(times[2]), content = lines.slice(i + 1).join('\n').replace(/<[^>]*>/g, '').replace(/\{\\[^}]*\}/g, '');
-        var decoder = document.createElement('textarea'); decoder.innerHTML = content;
-        if (Number.isFinite(start) && end > start && decoder.value) result.push({start:start, end:end, text:decoder.value});
+        if (content.indexOf('&') >= 0) { if (!decoder) decoder = document.createElement('textarea'); decoder.innerHTML = content; content = decoder.value; }
+        if (Number.isFinite(start) && end > start && content) result.push({start:start, end:end, text:content});
         break;
       }
     });
@@ -44,13 +44,15 @@
   function languageCode(code) { code = String(code || '').toLowerCase(); return ({eng:'en',hin:'hi',ben:'bn',ara:'ar',fra:'fr',fre:'fr',spa:'es',por:'pt',tam:'ta',tel:'te',kan:'kn',mal:'ml',urd:'ur',ind:'id',tur:'tr',rus:'ru',zho:'zh',chi:'zh',jpn:'ja',kor:'ko'})[code] || code; }
   function languageLabel(item) { var code = languageCode(item.lanCode || item.language); return AUDIO_LANGUAGES[code] || String(item.lanName || item.label || 'Original audio').replace(/ dub$/i,''); }
   function audioVariants(subject) { var seen = {}; return (subject.dubs || []).filter(function (item) { var id = String(item.subjectId || ''); if (Number(item.type || 0) !== 0 || !id || seen[id]) return false; seen[id] = true; return true; }); }
-  function matchingRuntime(streams, duration) { if (!(duration > 0)) return streams; var matched = streams.filter(function (stream) { return Math.abs(Number(stream.duration || 0) - duration) <= 2; }); if (!matched.length) throw new Error('This audio edition has a different runtime. Open that edition separately to play it safely.'); return matched; }
+  function runtimeTolerance(duration) { return Math.max(2,Math.min(10,Number(duration || 0) * 0.001)); }
+  function matchingRuntime(streams, duration) { if (!(duration > 0)) return streams; var matched = streams.filter(function (stream) { return Math.abs(Number(stream.duration || 0) - duration) <= runtimeTolerance(duration); }); if (!matched.length) { var error = new Error('This audio edition is a different cut. You can restart that edition from the beginning.'); error.code = 'DIFFERENT_RUNTIME'; throw error; } return matched; }
   function audioSubject(subject, variant) { return Object.assign({},subject,{subjectId:String(variant.subjectId),_audio_base_id:String(subject._audio_base_id || subject.subjectId),_audio_code:languageCode(variant.lanCode),_audio_language:languageLabel(variant)}); }
   function Player(api, callbacks) {
     this.api = api; this.callbacks = callbacks || {}; this.native = !!(global.webapis && webapis.avplay); this.av = this.native ? webapis.avplay : null;
     this.video = $('html-player'); this.page = $('player-page'); this.cache = new SubtitleCache(); this.active = false; this.epoch = 0; this.captionEpoch = 0;
     this.cues = []; this.position = 0; this.duration = 0; this.paused = false; this.bufferEvents = []; this.lastQualityChange = 0; this.pendingResume = 0; this.captionDelay = 0; this.audioEpoch = 0; this.audioTracks = [];
     this.seekTarget = null; this.seekInFlight = null; this.seekTimer = null; this.preparing = false; this.seekSerial = 0; this.lastNativeError = null; this.seekGraceUntil = 0; this.lastBufferEvent = null;
+    this.bufferTimer = null; this.bufferWaiting = false; this.scrubbing = false;
     this.seekDiagnostics = {requested:0,issued:0,completed:0,coalesced:0,state:'idle',target:null,lastConfirmed:0,lastState:'NONE',lastError:null,epoch:0};
     document.body.classList.toggle('native-avplay', this.native);
     $('player-engine').textContent = this.native ? 'SAMSUNG NATIVE PLAYER' : 'BROWSER PREVIEW';
@@ -66,10 +68,12 @@
     $('play-pause').onclick = function () { self.toggle(); };
     $('seek-back').onclick = function () { self.skip(-10000); };
     $('seek-forward').onclick = function () { self.skip(10000); };
-    $('seek-bar').addEventListener('input', function () { $('player-clock').textContent = clock(Number(this.value)) + ' / ' + clock(self.duration); });
-    $('seek-bar').addEventListener('change', function () { self.seek(Number(this.value)); });
+    $('seek-bar').addEventListener('input', function () { self.scrubbing = true; $('player-clock').textContent = clock(Number(this.value)) + ' / ' + clock(self.duration); });
+    $('seek-bar').addEventListener('change', function () { self.scrubbing = false; self.seek(Number(this.value)); });
+    $('seek-bar').addEventListener('blur', function () { self.scrubbing = false; });
     $('quality-select').onchange = function () { self.selectQuality(this.value); };
     $('audio-select').onchange = function () { self.selectAudio(this.value); };
+    $('restart-audio').onclick = function () { self.restartAudioEdition(); };
     $('subtitle-select').onchange = function () { self.selectCaption(this.value); };
     $('subtitle-delay').onchange = function () { self.captionDelay = Number(this.value); self.renderCaption(); };
     this.page.addEventListener('mousemove', function (event) { if (!self.lastMouse || self.lastMouse[0] !== event.clientX || self.lastMouse[1] !== event.clientY) { self.lastMouse = [event.clientX,event.clientY]; self.reveal(); } });
@@ -78,12 +82,20 @@
     this.saveTimer = setInterval(function () { if (self.active && self.callbacks.onProgress) self.callbacks.onProgress(self.position,self.duration); }, 1500);
     document.addEventListener('visibilitychange', function () { if (document.hidden && self.active) { self.pause(); if (self.callbacks.onProgress) self.callbacks.onProgress(self.position,self.duration); } });
   }
-  Player.prototype.loading = function (show, text) { $('player-loading').hidden = !show; if (text) $('loading-text').textContent = text; };
+  Player.prototype.loading = function (show, text) { if (!show) { clearTimeout(this.bufferTimer); this.bufferTimer = null; this.bufferWaiting = false; } $('player-loading').hidden = !show; if (text) $('loading-text').textContent = text; };
+  Player.prototype.bufferingIndicator = function (percent) {
+    this.bufferText = percent === undefined ? 'Buffering…' : 'Buffering · ' + percent + '%';
+    if (this.preparing) return;
+    if (this.bufferWaiting) { if (!$('player-loading').hidden) $('loading-text').textContent = this.bufferText; return; }
+    this.bufferWaiting = true;
+    var self = this, epoch = this.epoch, seeking = this.seekInFlight || this.seekTarget !== null || Date.now() < this.seekGraceUntil;
+    this.bufferTimer = setTimeout(function () { self.bufferTimer = null; if (self.active && self.bufferWaiting && self.epoch === epoch) self.loading(true,self.bufferText); },seeking ? 900 : 450);
+  };
   Player.prototype.error = function (message) { this.loading(false); this.reveal(); if (this.callbacks.onError) this.callbacks.onError(message); };
   Player.prototype.reveal = function () { if (!this.active) return; this.page.classList.remove('controls-hidden'); clearTimeout(this.hideTimer); var self = this; this.hideTimer = setTimeout(function () { if (document.querySelector('.remote-picker')) return self.reveal(); self.page.classList.add('controls-hidden'); self.page.focus(); }, 3500); };
   Player.prototype.updatePlayButton = function () { $('play-pause').textContent = this.paused ? '▶ Play' : 'Ⅱ Pause'; };
   Player.prototype.open = function (subject, streams, options) {
-    options = options || {};
+    options = options || {}; this.pendingAudioRestart = null; $('restart-audio').hidden = true;
     this.subject = subject; this.baseSubject = options.canonicalSubject || subject; this.streams = streams; this.options = options; this.key = options.key || String(subject.subjectId); this.subtitleKey = String(subject.subjectId) + ':' + Number(options.season || 0) + ':' + Number(options.episode || 0); this.preference = options.quality || 'auto'; this.active = true; this.page.hidden = false; this.page.tabIndex = -1; this.cues = []; this.captionEpoch++; this.audioEpoch++; this.audioTracks = [];
     $('subtitle-overlay').textContent = ''; $('now-title').textContent = subject.title + (options.season ? ' · S' + options.season + ' E' + options.episode : '');
     $('next-button').hidden = !options.hasNext; $('autoplay-next').checked = !!options.autoplay;
@@ -114,13 +126,15 @@
       try {
         if (this.av.getState() !== 'NONE') this.av.close();
         this.av.open(stream.url);
+        this.bufferConfiguration = {seconds:4,applied:false};
+        if (this.av.setBufferingParam) { try { this.av.setBufferingParam('PLAYER_BUFFER_FOR_PLAY','PLAYER_BUFFER_SIZE_IN_SECOND',4); this.av.setBufferingParam('PLAYER_BUFFER_FOR_RESUME','PLAYER_BUFFER_SIZE_IN_SECOND',4); this.bufferConfiguration.applied = true; } catch (bufferError) { this.bufferConfiguration.error = String(bufferError.name || 'NotSupported'); } }
         var agent = (stream.headers || {})['User-Agent'] || this.api.streamUserAgent;
         if (agent) this.av.setStreamingProperty('USER_AGENT', agent);
         this.av.setDisplayRect(0,0,window.innerWidth,window.innerHeight);
         this.av.setDisplayMethod('PLAYER_DISPLAY_MODE_LETTER_BOX');
         this.av.setListener({
           onbufferingstart:function () { if (epoch === self.epoch) self.buffering(); },
-          onbufferingprogress:function (percent) { if (epoch === self.epoch) self.loading(true, 'Buffering · ' + percent + '%'); },
+          onbufferingprogress:function (percent) { if (epoch === self.epoch) self.bufferingIndicator(percent); },
           onbufferingcomplete:function () { if (epoch === self.epoch) { self.loading(false); if (self.seekTarget !== null) self.flushSeek(); } },
           oncurrentplaytime:function (time) { if (epoch === self.epoch) self.tick(time); },
           onstreamcompleted:function () { if (epoch === self.epoch && self.callbacks.onEnd) self.callbacks.onEnd(); },
@@ -153,10 +167,11 @@
     var id = value.slice(8), variant = audioVariants(this.baseSubject).find(function (item) { return String(item.subjectId) === id; });
     if (id === String(this.subject.subjectId)) { this.audioSelection = value; return; }
     if (!variant) { $('audio-select').value = this.audioSelection; return; }
-    var request = ++this.audioEpoch, playbackEpoch = this.epoch, subject = audioSubject(this.baseSubject,variant); $('audio-select').disabled = true; $('stream-status').textContent = 'Preparing ' + languageLabel(variant) + ' audio…';
+    var request = ++this.audioEpoch, playbackEpoch = this.epoch, subject = audioSubject(this.baseSubject,variant); this.pendingAudioRestart = null; $('restart-audio').hidden = true; $('audio-select').disabled = true; $('stream-status').textContent = 'Preparing ' + languageLabel(variant) + ' audio…';
     return this.api.playback(subject,Number(this.options.season || 0),Number(this.options.episode || 0)).then(function (streams) {
       if (!self.active || request !== self.audioEpoch || playbackEpoch !== self.epoch) return;
-      streams = matchingRuntime(streams,Number(self.stream.duration) || self.duration / 1000);
+      try { streams = matchingRuntime(streams,Number(self.stream.duration) || self.duration / 1000); }
+      catch (error) { if (error.code === 'DIFFERENT_RUNTIME') { self.pendingAudioRestart = {subject:subject,streams:streams,variant:variant}; $('restart-audio').textContent = 'Restart in ' + languageLabel(variant); $('restart-audio').hidden = false; } throw error; }
       var selected = chooseQuality(streams,self.preference,navigator.connection && navigator.connection.downlink), position = self.previewPosition(), paused = self.paused;
       self.subject = subject; self.streams = streams; self.subtitleKey = String(subject.subjectId) + ':' + Number(self.options.season || 0) + ':' + Number(self.options.episode || 0); self.options.audioLanguage = subject._audio_code;
       var captionLanguage = $('subtitle-select').value, captionsEnabled = captionLanguage !== 'off';
@@ -164,15 +179,25 @@
       if (self.callbacks.onAudioPreference) self.callbacks.onAudioPreference({kind:'edition',subjectId:id,code:subject._audio_code,label:subject._audio_language});
     }).catch(function (error) { if (request === self.audioEpoch) { $('audio-select').value = self.audioSelection; self.error(error.message || 'This audio edition could not be loaded.'); } }).then(function () { if (request === self.audioEpoch) $('audio-select').disabled = false; });
   };
+  Player.prototype.restartAudioEdition = function () {
+    var pending = this.pendingAudioRestart; if (!pending || !this.active) return;
+    if (this.callbacks.onProgress) this.callbacks.onProgress(this.position,this.duration);
+    this.audioEpoch++; this.pendingAudioRestart = null; $('restart-audio').hidden = true;
+    this.subject = pending.subject; this.streams = pending.streams; this.options.audioLanguage = pending.subject._audio_code;
+    this.subtitleKey = String(pending.subject.subjectId) + ':' + Number(this.options.season || 0) + ':' + Number(this.options.episode || 0);
+    var language = $('subtitle-select').value, selected = chooseQuality(this.streams,this.preference,navigator.connection && navigator.connection.downlink);
+    this.populateQualities(); this.start(selected,0,this.paused); this.loadCaptions(selected,language !== 'off',language === 'off' ? this.options.language || 'en' : language);
+    if (this.callbacks.onAudioPreference) this.callbacks.onAudioPreference({kind:'edition',subjectId:String(pending.subject.subjectId),code:pending.subject._audio_code,label:pending.subject._audio_language});
+  };
   Player.prototype.previewPosition = function () { return this.seekTarget !== null ? this.seekTarget : this.seekInFlight ? this.seekInFlight.target : this.position; };
-  Player.prototype.updateTimeDisplay = function () { var seek = $('seek-bar'), maximum = Math.max(1000,Math.round(this.duration || 1000)), value = this.previewPosition(), text = clock(value) + ' / ' + clock(this.duration); if (Number(seek.max) !== maximum) seek.max = maximum; if (document.activeElement !== seek && Number(seek.value) !== value) seek.value = value; if ($('player-clock').textContent !== text) $('player-clock').textContent = text; };
+  Player.prototype.updateTimeDisplay = function () { var seek = $('seek-bar'), maximum = Math.max(1000,Math.round(this.duration || 1000)), value = this.previewPosition(), text = clock(value) + ' / ' + clock(this.duration); if (Number(seek.max) !== maximum) seek.max = maximum; if (!this.scrubbing && Number(seek.value) !== value) seek.value = value; if ($('player-clock').textContent !== text) $('player-clock').textContent = text; };
   Player.prototype.tick = function (position) { this.position = Math.max(0,Math.round(Number(position) || 0)); if (!this.native && Number.isFinite(this.video.duration)) this.duration = Math.round(this.video.duration * 1000); this.updateTimeDisplay(); this.renderCaption(); if (this.seekTarget !== null && !this.seekInFlight && this.seekDiagnostics.state === 'waiting-state') this.flushSeek(); };
-  Player.prototype.renderCaption = function () { var at = this.position - this.captionDelay, low = 0, high = this.cues.length - 1, found = -1; while (low <= high) { var middle = (low + high) >> 1; if (this.cues[middle].start <= at) { found = middle; low = middle + 1; } else high = middle - 1; } var cue = this.cues[found]; $('subtitle-overlay').textContent = cue && cue.end > at ? cue.text : ''; };
+  Player.prototype.renderCaption = function () { var at = this.position - this.captionDelay, low = 0, high = this.cues.length - 1, found = -1; while (low <= high) { var middle = (low + high) >> 1; if (this.cues[middle].start <= at) { found = middle; low = middle + 1; } else high = middle - 1; } var cue = this.cues[found], text = cue && cue.end > at ? cue.text : '', overlay = $('subtitle-overlay'); if (overlay.textContent !== text) overlay.textContent = text; };
   Player.prototype.toggle = function () { if (!this.active) return; if (this.paused) this.play(); else this.pause(); this.reveal(); };
   Player.prototype.play = function () { try { if (this.native) this.av.play(); else { var p = this.video.play(); if (p) p.catch(this.error.bind(this, 'Press OK on Play to begin.')); } this.paused = false; this.updatePlayButton(); } catch (e) { this.error(e.message); } };
   Player.prototype.pause = function () { try { if (this.native && this.av.getState() === 'PLAYING') this.av.pause(); else if (!this.native) this.video.pause(); this.paused = true; this.updatePlayButton(); } catch (_) {} };
   Player.prototype.recordNativeError = function (error,operation) { var name = error && (error.name || error.code || error.message) || String(error || 'UNKNOWN_ERROR'); var state = 'UNKNOWN'; try { state = this.native ? this.av.getState() : String(this.video.readyState); } catch (_) {} this.lastNativeError = {operation:operation,name:String(name),code:error && error.code !== undefined ? error.code : null,message:error && error.message || '',state:state,epoch:this.epoch,at:Date.now()}; this.seekDiagnostics.lastError = this.lastNativeError; return this.lastNativeError; };
-  Player.prototype.resetSeek = function () { clearTimeout(this.seekTimer); if (this.seekInFlight) clearTimeout(this.seekInFlight.timeout); this.seekTimer = null; this.seekTarget = null; this.seekInFlight = null; this.beginAfterSeek = null; if (this.seekDiagnostics) { this.seekDiagnostics.state = 'idle'; this.seekDiagnostics.target = null; } };
+  Player.prototype.resetSeek = function () { clearTimeout(this.seekTimer); this.loading(false); this.scrubbing = false; if (this.seekInFlight) clearTimeout(this.seekInFlight.timeout); this.seekTimer = null; this.seekTarget = null; this.seekInFlight = null; this.beginAfterSeek = null; if (this.seekDiagnostics) { this.seekDiagnostics.state = 'idle'; this.seekDiagnostics.target = null; } };
   Player.prototype.skip = function (milliseconds) { this.seek(this.previewPosition() + milliseconds); };
   Player.prototype.seek = function (position, immediate) {
     if (!this.active) return;
@@ -202,6 +227,7 @@
   Player.prototype.finishSeek = function (flight,error) {
     if (flight.epoch !== this.epoch || this.seekInFlight !== flight || !this.active) return;
     clearTimeout(flight.timeout); this.seekInFlight = null;
+    this.seekDiagnostics.lastDurationMs = Date.now() - flight.started;
     this.seekGraceUntil = Date.now() + 8000; this.bufferEvents = [];
     if (error) { this.recordNativeError(error,'seek'); this.seekDiagnostics.state = 'failed'; this.updateTimeDisplay(); this.error('The TV could not seek (' + this.lastNativeError.name + ').'); }
     else {
@@ -218,7 +244,7 @@
   Player.prototype.selectQuality = function (value) { var previous = this.preference; this.preference = value; var target = chooseQuality(this.streams,value,navigator.connection && navigator.connection.downlink); if (target && target.url !== this.stream.url) { try { matchingRuntime([target],Number(this.stream.duration) || this.duration / 1000); } catch (_) { this.preference = previous; $('quality-select').value = previous; this.error('That quality contains a different cut. Keep this quality to preserve your place.'); return; } var language = $('subtitle-select').value; this.start(target,this.previewPosition(),this.paused); this.loadCaptions(target,language !== 'off',language === 'off' ? this.options.language || 'en' : language); } };
   Player.prototype.buffering = function () {
     if (!this.active) return;
-    this.loading(true,'Buffering…');
+    this.bufferingIndicator();
     var reason = this.preparing ? 'preparing' : this.seekInFlight || this.seekTarget !== null ? 'seeking' : Date.now() < this.seekGraceUntil ? 'seek-grace' : 'network', nativeState = '';
     try { nativeState = this.native ? this.av.getState() : ''; } catch (_) {}
     this.lastBufferEvent = {at:Date.now(),reason:reason,state:nativeState,quality:this.stream && this.stream.resolutions};
@@ -226,7 +252,7 @@
     this.bufferEvents = this.bufferEvents.filter(function (time) { return Date.now() - time < 45000; }); this.bufferEvents.push(Date.now());
     if (this.bufferEvents.length < 2) return;
     var current = this.stream.resolutions, runtime = Number(this.stream.duration) || this.duration / 1000;
-    var target = this.streams.filter(function (stream) { return stream.resolutions < current && (!(runtime > 0) || Math.abs(Number(stream.duration || 0) - runtime) <= 2); }).sort(function (a,b) { return b.resolutions - a.resolutions; })[0];
+    var target = this.streams.filter(function (stream) { return stream.resolutions < current && (!(runtime > 0) || Math.abs(Number(stream.duration || 0) - runtime) <= runtimeTolerance(runtime)); }).sort(function (a,b) { return b.resolutions - a.resolutions; })[0];
     if (target) { this.bufferEvents = []; this.start(target,this.previewPosition(),false); $('stream-status').textContent = 'Auto adjusted for your connection'; }
   };
   Player.prototype.loadCaptions = function (stream, enabled, language) {
@@ -250,5 +276,5 @@
   Player.prototype.stop = function () { if (this.active && this.callbacks.onProgress) this.callbacks.onProgress(this.position,this.duration); this.active = false; this.epoch++; this.resetSeek(); this.preparing = false; this.captionEpoch++; clearTimeout(this.hideTimer); this.cues = []; $('subtitle-overlay').textContent = ''; try { if (this.native && this.av.getState() !== 'NONE') this.av.close(); else { this.video.pause(); this.video.removeAttribute('src'); this.video.load(); } } catch (_) {} this.page.hidden = true; if (document.fullscreenElement && document.exitFullscreen) document.exitFullscreen().catch(function () {}); };
   Player.prototype.handleKey = function (key,event) { if (!this.active) return false; if (key === 'Back' || key === 'Escape' || (key === 'Backspace' && document.activeElement.tagName !== 'INPUT')) { if (this.callbacks.onBack) this.callbacks.onBack(); return true; } if (key === 'MediaPlayPause' || key === ' ') { this.toggle(); return true; } if (key === 'MediaPlay') { this.play(); return true; } if (key === 'MediaPause') { this.pause(); return true; } if (key === 'MediaStop') { if (this.callbacks.onBack) this.callbacks.onBack(); return true; } if (key === 'MediaRewind' || key === 'MediaFastForward') { this.skip(key === 'MediaRewind' ? -10000 : 10000); return true; } var hidden = this.page.classList.contains('controls-hidden'); if ((key === 'ArrowLeft' || key === 'ArrowRight') && (hidden || document.activeElement === $('seek-bar') || document.activeElement === this.page)) { this.skip(key === 'ArrowLeft' ? -10000 : 10000); $('seek-bar').focus(); return true; } if (key === 'Enter' && document.activeElement === $('seek-bar')) { this.flushSeek(); return true; } if (hidden && key === 'Enter') { this.toggle(); return true; } if (/^Arrow/.test(key) || key === 'Tab' || key === 'Enter') { this.reveal(); if (hidden) { $('play-pause').focus(); return true; } } return false; };
   global.MovieBoxPlayer = Player; global.MovieBoxSubtitles = {parse:parseSubtitles,Cache:SubtitleCache}; global.MovieBoxChooseQuality = chooseQuality;
-  global.MovieBoxAudio = {variants:audioVariants,label:languageLabel,subject:audioSubject,matchingRuntime:matchingRuntime};
+  global.MovieBoxAudio = {variants:audioVariants,label:languageLabel,subject:audioSubject,matchingRuntime:matchingRuntime,tolerance:runtimeTolerance};
 })(window);
