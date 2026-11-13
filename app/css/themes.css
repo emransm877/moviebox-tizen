@@ -6,6 +6,8 @@
 :root[data-theme=eclipse]{--bg:#100e0b;--panel:#18150f;--surface:#252017;--hover:#393022;--selected:#493923;--line:#4c402d;--text:#fbf2df;--muted:#c5b394;--accent:#edc47f;--accent-ink:#2a1b08;--hero-shade:#21180d;--focus:#ffe2ac}
 .brand img{width:40px;height:45px}.sidebar,.settings-card{background:var(--panel);border-color:var(--line)}
 #detail-poster{object-fit:contain;background:var(--panel)}
+.library-tools{display:flex;flex-wrap:wrap;gap:14px;margin:20px 0 28px}.poster-card.is-selecting .poster-art::after{content:'';position:absolute;right:12px;top:12px;width:30px;height:30px;border-radius:8px;border:2px solid var(--accent);background:var(--panel);text-align:center;line-height:27px}.poster-card.is-selected .poster-art::after{content:'✓';color:var(--accent-ink);background:var(--accent)}
+.detail-copy{align-self:flex-start}.detail-copy>p:not(.muted):not(.detail-notice){margin:18px 0}.detail-actions{margin:18px 0 12px}#season-row{margin-top:18px}
 button.secondary,.detail-card,.remote-picker .modal,.modal,#search-input,.player-controls{background:var(--surface);border-color:var(--line)}
 button:hover{background:var(--hover)}button.primary:hover{background:var(--accent);filter:brightness(1.08)}button.active,.nav-button.active{background:var(--selected);border-color:var(--accent);color:var(--text)}
 button:focus-visible,input:focus-visible,select:focus-visible,[tabindex]:focus-visible{outline-color:var(--focus);box-shadow:none}

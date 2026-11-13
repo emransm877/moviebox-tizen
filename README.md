@@ -4,14 +4,14 @@ A small, independent Samsung Tizen client, installed on the TV as **MovieBox**.
 The interface is designed for a television and the Samsung remote, with native
 AVPlay decoding rather than a desktop application running on the TV.
 
-**Preview 0.5.0:** installed and tested on Samsung UA43U8000FRSER / Tizen 9.0.
+**Preview 0.6.0:** installed and tested on Samsung UA43U8000FRSER / Tizen 9.0.
 Native 1080p playback, subtitle loading, and forward/back seeking were verified;
 the user confirmed seeking with the Samsung remote. Requires Tizen 7.0+; other
 models remain unverified. See [hardware validation](docs/hardware-validation.md).
 
 ## Download and install
 
-[**Download TV install bundle**](https://github.com/emransm877/moviebox-tizen/releases/latest/download/MovieBox-TV-0.5.0-install-bundle.zip)
+[**Download TV install bundle**](https://github.com/emransm877/moviebox-tizen/releases/latest/download/MovieBox-TV-0.6.0-install-bundle.zip)
 
 This is a developer-install bundle: an unsigned WGT plus a Windows helper that
 signs and installs using your own Samsung TV certificate profile. Extract it,
@@ -54,7 +54,7 @@ Python 3.11+ can create the unsigned development widget without an npm toolchain
 python tools/package.py
 ```
 
-The output is `dist/MovieBox-TV-0.5.0-unsigned.wgt` with a SHA-256 file. It is an
+The output is `dist/MovieBox-TV-0.6.0-unsigned.wgt` with a SHA-256 file. It is an
 unsigned build artifact, **not an installable signed release**. The package
 contains only the app's HTML/CSS/JavaScript and icons; it does not contain Python,
 an emulator, a browser engine, or the Android APK.
@@ -119,3 +119,7 @@ See `THIRD_PARTY_NOTICES.md`, `CONTRIBUTING.md` and `SECURITY.md`.
 ## Themes and latest titles
 
 Choose any of five persistent themes in Settings, including a matching MovieBox logo. Home rotates up to 100 latest movies and TV shows with remote-friendly Previous/Next/Pause and Watch/More info actions for the active title. See [behavior and feature preservation](docs/THEMES_AND_SPOTLIGHT.md).
+
+## Catalogue cache and Continue watching
+
+Movies/TV Shows restore their cached pages and position immediately. After five minutes, the app checks for new results in the background; Apply filters can refresh manually. In Continue watching choose **Select titles**, select one/several or **Select all**, then **Remove selected**. **Undo removal** restores the last batch during the current session. My list is preserved. See [details](docs/CACHE_AND_HISTORY.md).

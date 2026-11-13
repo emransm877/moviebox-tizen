@@ -55,3 +55,7 @@ These outstanding items are intentionally listed separately from completed fixes
 ## Theme and spotlight update
 
 Five selectable, persistent themes and a shuffled latest-movies/TV carousel are implemented. Existing feature regression suites are retained. See [theme and spotlight behavior](THEMES_AND_SPOTLIGHT.md).
+
+## Cached catalogues and history management
+
+Movies/TV Shows now restore cached filtered pages and position, with background refresh. Continue watching supports single/multiple/all removal and Undo while preserving My list. Details use compact action spacing. See [behavior and evidence](CACHE_AND_HISTORY.md).

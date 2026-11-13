@@ -76,3 +76,15 @@ The 62 previous browser checks still pass; 13 additional theme/carousel checks
 exercise exact active-slide actions, remote navigation, persistence and native
 source preservation with explicitly mocked AVPlay. These do not certify every
 upstream title or model. The release widget excludes private diagnostics.
+## 0.6.0 catalogue cache and history selection
+
+Date: 2026-11-14. Same Samsung U8000F / Tizen 9.0 target.
+
+The actual app's catalogue request counter was 11 after Movies, 12 after TV
+Shows, and remained 12 on returning to Movies. Twelve movie posters were visible
+on return, demonstrating the fresh-cache path without another catalogue request.
+The totals include the earlier spotlight metadata calls. A bounded application
+handler check selected one Continue watching title, then cancelled selection;
+stored history was 10 entries before and after. No production history was removed.
+Browser fixture tests cover actual deletion, Select all, Undo and page reload;
+those AVPlay calls are explicitly mocked. The final widget excludes diagnostics.

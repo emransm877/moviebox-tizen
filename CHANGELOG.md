@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.6.0 — 2026-11-14
+
+- Cache Movies/TV Shows metadata and loaded pages by filters across visits and restarts. Show cached results immediately, check stale data in the background, and preserve position when unchanged.
+- Add Continue watching selection mode, single/multiple/all removal and Undo. Remove all episode records belonging to a chosen title, preserve My list, and prevent removed progress from being recreated on close.
+
+- Tighten title details: place actions immediately after the synopsis for movies and after the season selector for TV shows. Remove the desktop's flexible gap and hide the entire unused movie season row.
+- Keep existing posters, seasons, episode cards, playback, library and themes intact; use consistent compact spacing on TV too.
+
+
 ## 0.5.0 — 2026-11-14
 
 - Add five live Settings themes: Obsidian Cinema, Orbital, Prism, Aurora and Eclipse. Save the choice across launches; refresh surfaces, focus accents, hero styling and navigation without changing playback or library data.
