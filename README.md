@@ -4,14 +4,14 @@ A small, independent Samsung Tizen client, installed on the TV as **MovieBox**.
 The interface is designed for a television and the Samsung remote, with native
 AVPlay decoding rather than a desktop application running on the TV.
 
-**Preview 0.8.1:** browser-tested player revision, installed and launched on the test TV. Earlier builds were installed and tested on Samsung UA43U8000FRSER / Tizen 9.0.
+**Preview 0.8.2:** browser-tested player revision, installed and launched on the test TV. Earlier builds were installed and tested on Samsung UA43U8000FRSER / Tizen 9.0.
 Native 1080p playback, subtitle loading, and forward/back seeking were verified;
 the user confirmed seeking with the Samsung remote. Requires Tizen 7.0+; other
 models remain unverified. See [hardware validation](docs/hardware-validation.md).
 
 ## Download and install
 
-[**Download TV install bundle**](https://github.com/emransm877/moviebox-tizen/releases/latest/download/MovieBox-TV-0.8.1-install-bundle.zip)
+[**Download TV install bundle**](https://github.com/emransm877/moviebox-tizen/releases/latest/download/MovieBox-TV-0.8.2-install-bundle.zip)
 
 This is a developer-install bundle: an unsigned WGT plus a Windows helper that
 signs and installs using your own Samsung TV certificate profile. Extract it,
@@ -54,7 +54,7 @@ Python 3.11+ can create the unsigned development widget without an npm toolchain
 python tools/package.py
 ```
 
-The output is `dist/MovieBox-TV-0.8.1-unsigned.wgt` with a SHA-256 file. It is an
+The output is `dist/MovieBox-TV-0.8.2-unsigned.wgt` with a SHA-256 file. It is an
 unsigned build artifact, **not an installable signed release**. The package
 contains only the app's HTML/CSS/JavaScript and icons; it does not contain Python,
 an emulator, a browser engine, or the Android APK.

@@ -92,7 +92,7 @@
     this.bufferTimer = setTimeout(function () { self.bufferTimer = null; if (self.active && self.bufferWaiting && self.epoch === epoch) self.loading(true,self.bufferText); },seeking ? 900 : 450);
   };
   Player.prototype.error = function (message) { this.loading(false); this.reveal(); if (this.callbacks.onError) this.callbacks.onError(message); };
-  Player.prototype.reveal = function () { if (!this.active) return; this.page.classList.remove('controls-hidden'); clearTimeout(this.hideTimer); var self = this; this.hideTimer = setTimeout(function () { if (document.querySelector('.remote-picker') || document.activeElement.closest('#next-up,#episode-drawer,#player-more')) return self.reveal(); self.page.classList.add('controls-hidden'); self.page.focus(); }, 3500); };
+  Player.prototype.reveal = function () { if (!this.active) return; this.page.classList.remove('controls-hidden'); clearTimeout(this.hideTimer); var self = this; this.hideTimer = setTimeout(function () { if (document.querySelector('.remote-picker') || document.activeElement.closest('#next-up,#episode-drawer,#player-more,#volume-popover')) return self.reveal(); self.page.classList.add('controls-hidden'); self.page.focus(); }, 3500); };
   Player.prototype.updatePlayButton = function () { var button=$('play-pause'),label=this.paused?'Play':'Pause';button.setAttribute('aria-label',label);button.title=label;button.querySelector('img').src='assets/player-icons/'+(this.paused?'play':'pause')+'.svg'; };
   Player.prototype.open = function (subject, streams, options) {
     options = options || {}; this.pendingAudioRestart = null; $('restart-audio').hidden = true;

@@ -12,3 +12,12 @@ Validation covers real Qt layout/input/fullscreen/episode behavior, 1920/1280 TV
 
 
 Season selectors size to their labels instead of stretching across the panel. The desktop More menu uses a shared text inset and an explicitly padded, vertically aligned timing editor.
+
+
+## Explicit volume adjustment and shared dropdown sizing
+
+The speaker icon is an ordinary navigable button. Left/Right or Tab can move past it without entering a slider. Activate it by click or OK/Enter to open a small popup containing volume level, slider and mute. Left/Right adjust only after entering the popup. OK/Enter on the slider or Back/Escape closes the popup and restores the speaker focus; outside clicks also close it. Playback is preserved. The slider is not a focus target in the closed main control row.
+
+All Windows selectors share one content-sized popup implementation: option text measurement, consistent left inset, a small checkmark column, and a width cap for long labels. A wide settings field no longer forces a wide popup. Closed text also uses a fixed inset rather than native style-dependent padding. Every TV selector uses actual rendered font measurements and shared compact title/row/container padding, with wrapping for long labels. This applies to seasons, audio/subtitle languages, quality, filters and settings.
+
+Native Qt input checks cover bypassing the speaker, explicit activation, adjusting volume without pausing, return focus, and a wide field opening a compact popup. TV browser tests mock TVAudioControl as well as AVPlay to verify the same remote behavior. Hardware volume varies by audio output and retains the documented API fallback; automated tests do not certify every physical remote/output.

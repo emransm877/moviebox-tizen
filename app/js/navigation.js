@@ -71,7 +71,7 @@
     var shade = document.createElement('div'); shade.className = 'modal-shade remote-picker'; shade.setAttribute('role','dialog'); shade.setAttribute('aria-modal','true');
     var panel = document.createElement('div'); panel.className = 'modal';
     var longest=Array.prototype.reduce.call(select.options,function(width,option){return Math.max(width,option.textContent.length);},0);
-    panel.style.width=Math.min(600,Math.max(280,longest*12+88))+'px';
+    panel.style.width='max-content';
     var title = document.createElement('h2'); title.textContent = select.getAttribute('aria-label') || (select.labels && select.labels[0] ? select.labels[0].textContent.split('\n')[0].trim() : 'Choose an option'); panel.appendChild(title);
     var choices = document.createElement('div'); choices.className = 'remote-picker-options'; panel.appendChild(choices);
     Array.prototype.forEach.call(select.options,function (option) {
@@ -80,6 +80,11 @@
       choices.appendChild(button);
     });
     var cancel = document.createElement('button'); cancel.className = 'quiet'; cancel.textContent = 'Cancel'; cancel.onclick = function () { self.closePicker(); }; panel.appendChild(cancel); shade.appendChild(panel); document.body.appendChild(shade);
+    var context=document.createElement('canvas').getContext('2d'),first=choices.querySelector('button');
+    var optionStyle=getComputedStyle(first||cancel);context.font=optionStyle.font||[optionStyle.fontWeight,optionStyle.fontSize,optionStyle.fontFamily].join(' ');
+    var optionWidth=Array.prototype.reduce.call(select.options,function(width,option){return Math.max(width,context.measureText(option.textContent).width);},0);
+    var titleStyle=getComputedStyle(title);context.font=titleStyle.font||[titleStyle.fontWeight,titleStyle.fontSize,titleStyle.fontFamily].join(' ');var titleWidth=context.measureText(title.textContent).width;
+    panel.style.width=Math.ceil(Math.min(innerWidth-40,560,Math.max(200,optionWidth+90,titleWidth+42)))+'px';
     this.picker = {element:shade,select:select,root:previousRoot}; this.scope(shade); this.focus(choices.querySelector('button.active:not(:disabled)') || choices.querySelector('button:not(:disabled)') || cancel);
   };
   Navigation.prototype.closePicker = function () {

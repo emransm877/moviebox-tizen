@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.8.2 — 2026-11-14
+
+- Move the volume slider out of the main row. Explicitly activate the speaker icon to adjust volume; normal arrow navigation skips past the icon. OK/Enter or Back/Escape closes the popup and returns focus. Mute remains inside the popup.
+- Size every dropdown popup to its actual option text instead of inheriting wide fields. Unify text padding and remove extra native/TV container spacing.
+
 ## 0.8.1 — 2026-11-14
 
 - Restrict the episode Up shortcut to hidden player controls; visible controls and open menus keep normal navigation.

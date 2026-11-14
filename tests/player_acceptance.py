@@ -16,6 +16,7 @@ try:
     page.route('**/js/api.js',lambda r:r.fulfill(content_type='text/javascript',body=STUB))
     page.route('**/$WEBAPIS/**',lambda r:r.fulfill(content_type='text/javascript',body=''))
     page.route('https://api.github.com/**',lambda r:r.fulfill(content_type='application/json',body='{}'))
+    page.add_init_script("window.__volume=70;window.__muted=false;window.tizen={tvaudiocontrol:{getVolume:()=>__volume,isMute:()=>__muted,setVolume:v=>{__volume=v;},setMute:v=>{__muted=v;},setVolumeChangeListener:()=>{}}};")
     page.add_init_script('''if(location.protocol==='http:'){if(!sessionStorage.getItem('seeded')){localStorage.setItem('moviebox-tv-library',JSON.stringify({settings:{theme:THEME},history:{},saved:{}}));sessionStorage.setItem('seeded','1');}window.__firstTheme='';requestAnimationFrame(function(){__firstTheme=document.documentElement.dataset.theme;});}'''.replace('THEME',json.dumps(theme)))
     page.goto(f'http://127.0.0.1:{server.server_port}/');page.locator('.poster-card').first.wait_for();page.evaluate('MovieBoxTV.carousel.loaded=true')
     return page
@@ -45,12 +46,22 @@ try:
   start()
   for width in (1920,1280):
     page.set_viewport_size({'width':width,'height':1080});page.wait_for_timeout(80)
-    boxes=page.locator('#player-controls .transport-row button:not([hidden]),#player-controls .transport-row select,#player-clock,#volume-slider').evaluate_all('els=>els.filter(e=>!e.hidden).map(e=>{var r=e.getBoundingClientRect();return {y:r.y+r.height/2,left:r.left,right:r.right};})')
+    boxes=page.locator('#player-controls .transport-row button:not([hidden]),#player-controls .transport-row select,#player-clock').evaluate_all('els=>els.filter(e=>!e.hidden).map(e=>{var r=e.getBoundingClientRect();return {y:r.y+r.height/2,left:r.left,right:r.right};})')
     assert max(b['y'] for b in boxes)-min(b['y'] for b in boxes)<3,boxes
     assert all(b['left']>=0 and b['right']<=width for b in boxes),boxes
   page.locator('#player-controls').screenshot(path=str(OUT/'inline-controls.png'))
   page.set_viewport_size({'width':1920,'height':1080})
   checks['inline_player_controls_fit_one_row_at_1920_and_1280']=True
+  assert not page.locator('#volume-slider').is_visible()
+  page.locator('#mute-button').focus();page.keyboard.press('ArrowRight')
+  assert page.evaluate('document.activeElement.id')!='volume-slider' and not page.locator('#volume-popover').is_visible()
+  page.locator('#mute-button').focus();page.keyboard.press('Enter')
+  assert page.locator('#volume-popover').is_visible() and page.evaluate('document.activeElement.id')=='volume-slider'
+  before=page.evaluate('__volume');page.keyboard.press('ArrowRight');assert page.evaluate('__volume')>before
+  assert page.evaluate('nativeState')=='PLAYING'
+  page.locator('#volume-popover').screenshot(path=str(OUT/'volume-popover.png'))
+  page.keyboard.press('Enter');assert not page.locator('#volume-popover').is_visible() and page.evaluate('document.activeElement.id')=='mute-button'
+  checks['speaker_is_bypassed_until_ok_opens_volume_then_ok_returns_focus']=True
   page.evaluate("MovieBoxTV.player.reveal();document.getElementById('play-pause').focus()")
   page.keyboard.press('ArrowUp')
   assert not page.locator('#episode-drawer').is_visible() and page.evaluate('nativeState')=='PLAYING'
@@ -63,6 +74,11 @@ try:
   page.keyboard.down('ArrowUp');page.keyboard.up('ArrowUp')
   page.keyboard.press('Escape');assert not page.locator('#episode-drawer').is_visible()
   checks['single_up_press_opens_right_drawer_without_pausing']=True
+  page.locator('#episode-browser').click();page.locator('#player-season-select').focus();page.keyboard.press('Enter')
+  assert page.locator('.remote-picker .modal').bounding_box()['width']<280
+  page.locator('.remote-picker .modal').screenshot(path=str(OUT/'content-sized-dropdown.png'))
+  page.keyboard.press('Escape');page.keyboard.press('Escape')
+  checks['shared_remote_dropdown_sizes_to_measured_text_and_uniform_padding']=True
   page.locator('#player-more-button').click();assert page.locator('#subtitle-delay').is_visible()
   assert page.evaluate('nativeState')=='PLAYING'
   page.keyboard.press('Escape');assert not page.locator('#player-more').is_visible()
@@ -127,5 +143,5 @@ try:
   assert not errors,errors;checks['no_javascript_exceptions']=True
   page.screenshot(path=str(OUT/'end-details.png'));browser.close()
 finally:
- server.shutdown();result={'scope':'Headless Edge, fixture API, mocked AVPlay. Credits timing is not available for every upstream title.','checks':checks,'passed':len(checks)==18 and not errors}
+ server.shutdown();result={'scope':'Headless Edge, fixture API, mocked AVPlay. Credits timing is not available for every upstream title.','checks':checks,'passed':len(checks)==20 and not errors}
  (OUT/'result.json').write_text(json.dumps(result,indent=2),encoding='utf-8');print(json.dumps(result,indent=2))
