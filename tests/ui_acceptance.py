@@ -353,6 +353,11 @@ def run():
             page.locator('[data-nav=movies]').click()
             page.wait_for_function('document.querySelectorAll(".poster-card").length===12')
             assert page.locator('#catalogue-filter-fields select').count()==6
+            page.wait_for_timeout(80)
+            filter_boxes=page.locator('#catalogue-filter-fields select').evaluate_all('els=>els.map(e=>{var r=e.getBoundingClientRect();return {y:r.y,right:r.right,left:r.left,width:r.width};})')
+            assert max(b['y'] for b in filter_boxes)-min(b['y'] for b in filter_boxes)<2
+            assert all(b['right']<=page.viewport_size['width'] and b['left']>=0 for b in filter_boxes)
+            page.locator('#catalogue-filters').screenshot(path=str(OUTPUT/'single-filter-row.png'))
             assert page.evaluate('MovieBoxTV.allSubjects({items:[]}).length')==0
             remote_pick('#filter-genre','Action')
             remote_pick('#filter-country','India')

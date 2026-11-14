@@ -102,3 +102,10 @@ The current 0.7.2 player code was checked on Samsung U8000F / Tizen 9 using a te
 Native AVPlay accepted successive injected OK inputs for pause and resume without waiting for the controls to hide. The inputs were injected 118 ms apart; this is not a measurement of the physical remote's radio/IR latency. Seeking near the fixture's actual end led to the native completion callback and a return to the title details. No real title completion was simulated. Stored saved-list and history counts remained unchanged, and no runtime errors were reported during this check.
 
 The normal signed 0.7.2 release was reinstalled and launched afterwards. The private diagnostic listener was stopped. Public release widgets and bundles remain unchanged and contain no diagnostic code, personal certificate or signature. Series progression and the episode drawer retain browser fixture coverage; a physical remote acceptance test for every control/title is not claimed.
+
+
+## 0.8.3 sizing and row-focus checks — 2026-11-14
+
+A temporary private build with the current player code used a legal local H.264 fixture on Samsung U8000F / Tizen 9. Injected application key events moved Right past Volume directly to Quality, rather than the seek bar. The former `PLAYER_DISPLAY_MODE_CROPPED_FULL` command returned `InvalidValuesError` on this TV. The corrected button cycled Letterbox/Fit, Full-screen/Stretch and Auto aspect, with each native command accepted while playback remained PLAYING and the corresponding UI label updated. Saved-list and history counts were unchanged. The normal signed 0.8.3 release was restored and launched afterwards; the owned diagnostic listener was stopped.
+
+This verifies native command acceptance and application focus behavior, not physical IR/radio latency or captured native-plane pixels. Equal source/screen aspect ratios can produce the same visible picture across valid sizing modes. Samsung's supported display enums are documented at https://developer.samsung.com/smarttv/develop/api-references/samsung-product-api-references/avplay-api.html . Public packages contain neither the diagnostic code nor personal signing material.

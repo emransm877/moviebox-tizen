@@ -72,3 +72,7 @@ select:not(.player-icon-select){appearance:none;-webkit-appearance:none;padding:
 @media(prefers-reduced-motion:reduce){.volume-popover{animation:none}}
 .remote-picker .modal{gap:10px}.remote-picker .modal h2{margin:0}
 .remote-picker .modal>div.remote-picker-options{gap:6px;padding:2px 0;max-height:55vh}
+
+.catalogue-filter-fields{display:flex;flex-wrap:nowrap;gap:12px;align-items:flex-start;overflow-x:auto;padding-bottom:3px}
+.catalogue-filter-fields label{flex:0 0 auto;width:auto;white-space:nowrap;font-size:15px;gap:6px}.catalogue-filter-fields select{width:auto;min-width:0;font-size:17px;min-height:48px}.catalogue-filter-actions{margin-top:14px;gap:12px}.catalogue-filters{padding:18px}
+.catalogue-filters{background:var(--panel);border-color:var(--line)}.catalogue-filter-fields label{color:var(--muted)}.catalogue-filter-fields select{color:var(--text)}

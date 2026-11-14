@@ -11,6 +11,7 @@
     this.dirty = true; this.entries = []; this.cachedItems = [];
     this.metrics = {layoutBuilds:0,layoutReads:0,cacheHits:0,keyMoves:0,lastMoveMs:0,maxMoveMs:0,focusChanges:0,lastHandlerMs:0,maxHandlerMs:0,lastInputDelayMs:0,maxInputDelayMs:0};
     var self = this;
+    document.addEventListener('focusin',function(event){if(event.target.closest&&event.target.closest('#player-controls .transport-row'))self.lastPlayerControl=event.target;});
     this.observer = new MutationObserver(function (changes) { if (changes.some(function (change) { var node = change.target.nodeType === 1 ? change.target : change.target.parentElement; return !node || !node.closest('#subtitle-overlay,#player-clock,#stream-status,#toast'); })) self.invalidate(); });
     global.addEventListener('resize',function () { self.invalidate(); });
     document.addEventListener('scroll',function () { self.invalidate(); },true);
@@ -84,7 +85,7 @@
     var optionStyle=getComputedStyle(first||cancel);context.font=optionStyle.font||[optionStyle.fontWeight,optionStyle.fontSize,optionStyle.fontFamily].join(' ');
     var optionWidth=Array.prototype.reduce.call(select.options,function(width,option){return Math.max(width,context.measureText(option.textContent).width);},0);
     var titleStyle=getComputedStyle(title);context.font=titleStyle.font||[titleStyle.fontWeight,titleStyle.fontSize,titleStyle.fontFamily].join(' ');var titleWidth=context.measureText(title.textContent).width;
-    panel.style.width=Math.ceil(Math.min(innerWidth-40,560,Math.max(200,optionWidth+90,titleWidth+42)))+'px';
+    panel.style.width=Math.ceil(Math.min(innerWidth-40,560,Math.max(200,optionWidth+96,titleWidth+46)))+'px';
     this.picker = {element:shade,select:select,root:previousRoot}; this.scope(shade); this.focus(choices.querySelector('button.active:not(:disabled)') || choices.querySelector('button:not(:disabled)') || cancel);
   };
   Navigation.prototype.closePicker = function () {
@@ -96,6 +97,20 @@
     if (!current) { this.focus(entries[0] && entries[0].element); return; }
     var cx = current.x, cy = current.y;
     var horizontal = direction === 'ArrowLeft' || direction === 'ArrowRight', positive = direction === 'ArrowRight' || direction === 'ArrowDown';
+    var playerRow=active.closest&&active.closest('#player-controls .transport-row');
+    if(playerRow){
+      var rowItems=entries.filter(function(entry){return playerRow.contains(entry.element);}).map(function(entry){return entry.element;});
+      this.lastPlayerControl=active;
+      if(horizontal){var index=rowItems.indexOf(active),target=rowItems[Math.max(0,Math.min(rowItems.length-1,index+(positive?1:-1)))];if(target){this.focus(target);this.lastPlayerControl=target;}}
+      else if(direction==='ArrowUp'){var seek=document.getElementById('seek-bar');if(entries.some(function(entry){return entry.element===seek;}))this.focus(seek);}
+      this.metrics.lastMoveMs=Math.round((performance.now()-started)*100)/100;this.metrics.maxMoveMs=Math.max(this.metrics.maxMoveMs,this.metrics.lastMoveMs);return;
+    }
+    if(active.id==='seek-bar'&&direction==='ArrowDown'){
+      var rowEntries=entries.filter(function(entry){return entry.element.closest('#player-controls .transport-row');});
+      var previous=this.lastPlayerControl,target=rowEntries.some(function(entry){return entry.element===previous;})?previous:(rowEntries[0]&&rowEntries[0].element);
+      if(target)this.focus(target);
+      this.metrics.lastMoveMs=Math.round((performance.now()-started)*100)/100;this.metrics.maxMoveMs=Math.max(this.metrics.maxMoveMs,this.metrics.lastMoveMs);return;
+    }
     var main = active.closest && active.closest('#main-content'), sidebar = active.closest && active.closest('.sidebar'), region = !horizontal && (main || sidebar);
     var best = null, score = Infinity;
     entries.forEach(function (entry) {

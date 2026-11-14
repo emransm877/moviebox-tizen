@@ -23,11 +23,16 @@
   var stop=player.stop;player.stop=function(){closeMore();closeVolume();return stop.apply(this,arguments);};
   $('mute-button').onclick=openVolume;$('volume-close').onclick=closeVolume;
   document.addEventListener('pointerdown',function(event){if(!volumePopup.hidden&&!volumePopup.contains(event.target)&&!$('mute-button').contains(event.target))closeVolume();},true);
-  var fitModes=['PLAYER_DISPLAY_MODE_LETTER_BOX','PLAYER_DISPLAY_MODE_CROPPED_FULL','PLAYER_DISPLAY_MODE_FULL_SCREEN'],fitNames=['Fit','Crop','Stretch'],fitIcons=['fit','crop','stretch'];
+  var fitModes=['PLAYER_DISPLAY_MODE_LETTER_BOX','PLAYER_DISPLAY_MODE_FULL_SCREEN','PLAYER_DISPLAY_MODE_AUTO_ASPECT_RATIO'];
   $('video-fit').onclick=function(){
     var next=(fitIndex+1)%3;
-    try{if(player.native)player.av.setDisplayMethod(fitModes[next]);else player.video.style.objectFit=['contain','cover','fill'][next];fitIndex=next;player.displayMode=fitModes[next];$('video-fit').title='Video size: '+fitNames[next];$('video-fit').setAttribute('aria-label',$('video-fit').title);$('video-fit').querySelector('img').src='assets/player-icons/video-scale-'+fitIcons[next]+'.svg';}
-    catch(_){app.toast?app.toast('This video sizing mode is unavailable.'):null;}
+    try{
+      if(player.native)player.av.setDisplayMethod(fitModes[next]);else player.video.style.objectFit=['contain','cover','fill'][next];
+      fitIndex=next;player.displayMode=fitModes[next];player.lastDisplayError=null;
+      var name=(player.native?['Fit','Stretch','Auto aspect']:['Fit','Crop','Stretch'])[next],glyph=(player.native?['fit','stretch','fit']:['fit','crop','stretch'])[next];
+      $('video-fit').title='Video size: '+name;$('video-fit').setAttribute('aria-label',$('video-fit').title);$('video-fit').dataset.mode=name;$('video-fit').querySelector('img').src='assets/player-icons/video-scale-'+glyph+'.svg';app.toast('Video size: '+name);
+    }
+    catch(error){player.lastDisplayError={name:error.name||'Error',mode:fitModes[next]};app.toast('Cannot change video size right now. Your previous mode is kept.');}
   };
   function tvAudio(){return global.tizen&&tizen.tvaudiocontrol;}
   function syncVolume(){

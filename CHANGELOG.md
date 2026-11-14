@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.8.3 — 2026-11-14
+
+- Put the six catalogue fields in one content-sized row with readable selected text.
+- Fix TV sizing to use supported Fit, Stretch and Auto aspect modes, with visible success/error feedback.
+
+- Give the player icon row explicit Left/Right navigation in visual order. Do not jump to the seek bar across the gap after Volume. Skip hidden/disabled row actions.
+- Up moves from the visible row to the seek bar; Down returns to the last focused row action. Popup sliders and menus retain their own input handling.
+
 ## 0.8.2 — 2026-11-14
 
 - Move the volume slider out of the main row. Explicitly activate the speaker icon to adjust volume; normal arrow navigation skips past the icon. OK/Enter or Back/Escape closes the popup and returns focus. Mute remains inside the popup.

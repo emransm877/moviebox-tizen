@@ -13,7 +13,7 @@ try:
   def new_page(theme='eclipse'):
     page=browser.new_page(viewport={'width':1920,'height':1080})
     page.on('pageerror',lambda error:errors.append(str(error)))
-    page.route('**/js/api.js',lambda r:r.fulfill(content_type='text/javascript',body=STUB))
+    page.route('**/js/api.js',lambda r:r.fulfill(content_type='text/javascript',body=STUB+"\nwebapis.avplay.setDisplayMethod=function(mode){if(!['PLAYER_DISPLAY_MODE_LETTER_BOX','PLAYER_DISPLAY_MODE_FULL_SCREEN','PLAYER_DISPLAY_MODE_AUTO_ASPECT_RATIO'].includes(mode))throw new TypeError('Unsupported display mode');__avcalls.push(['displayMode',mode]);};"))
     page.route('**/$WEBAPIS/**',lambda r:r.fulfill(content_type='text/javascript',body=''))
     page.route('https://api.github.com/**',lambda r:r.fulfill(content_type='application/json',body='{}'))
     page.add_init_script("window.__volume=70;window.__muted=false;window.tizen={tvaudiocontrol:{getVolume:()=>__volume,isMute:()=>__muted,setVolume:v=>{__volume=v;},setMute:v=>{__muted=v;},setVolumeChangeListener:()=>{}}};")
@@ -54,7 +54,17 @@ try:
   checks['inline_player_controls_fit_one_row_at_1920_and_1280']=True
   assert not page.locator('#volume-slider').is_visible()
   page.locator('#mute-button').focus();page.keyboard.press('ArrowRight')
-  assert page.evaluate('document.activeElement.id')!='volume-slider' and not page.locator('#volume-popover').is_visible()
+  assert page.evaluate('document.activeElement.id')=='quality-select' and not page.locator('#volume-popover').is_visible()
+  row=page.locator('#player-controls .transport-row button:visible:not(:disabled),#player-controls .transport-row select:visible:not(:disabled)').evaluate_all('els=>els.map(e=>e.id)')
+  quality=page.locator('#quality-select').input_value();page.locator('#'+row[0]).focus()
+  for target in row[1:]:
+    page.keyboard.press('ArrowRight');assert page.evaluate('document.activeElement.id')==target
+  for target in reversed(row[:-1]):
+    page.keyboard.press('ArrowLeft');assert page.evaluate('document.activeElement.id')==target
+  page.locator('#audio-select').focus();page.keyboard.press('ArrowUp');assert page.evaluate('document.activeElement.id')=='seek-bar'
+  page.keyboard.press('ArrowDown');assert page.evaluate('document.activeElement.id')=='audio-select'
+  assert page.locator('#quality-select').input_value()==quality and page.evaluate('nativeState')=='PLAYING'
+  checks['left_right_stay_in_player_row_and_seek_down_returns_to_previous_icon']=True
   page.locator('#mute-button').focus();page.keyboard.press('Enter')
   assert page.locator('#volume-popover').is_visible() and page.evaluate('document.activeElement.id')=='volume-slider'
   before=page.evaluate('__volume');page.keyboard.press('ArrowRight');assert page.evaluate('__volume')>before
@@ -62,6 +72,17 @@ try:
   page.locator('#volume-popover').screenshot(path=str(OUT/'volume-popover.png'))
   page.keyboard.press('Enter');assert not page.locator('#volume-popover').is_visible() and page.evaluate('document.activeElement.id')=='mute-button'
   checks['speaker_is_bypassed_until_ok_opens_volume_then_ok_returns_focus']=True
+  before=page.evaluate("__avcalls.filter(c=>['open','close','play','pause','prepareAsync'].includes(c[0])).length")
+  for label in ('Stretch','Auto aspect','Fit'):
+    page.locator('#video-fit').click();assert page.locator('#video-fit').get_attribute('aria-label')=='Video size: '+label
+    assert page.locator('#toast').inner_text()=='Video size: '+label and page.evaluate('nativeState')=='PLAYING'
+  assert page.evaluate("__avcalls.filter(c=>['open','close','play','pause','prepareAsync'].includes(c[0])).length")==before
+  checks['native_video_size_cycles_only_supported_modes_without_restarting_playback']=True
+  page.evaluate("(()=>{window.__displayMethod=webapis.avplay.setDisplayMethod;webapis.avplay.setDisplayMethod=function(){throw new Error('fixture mode failure');};})()")
+  page.locator('#video-fit').click();assert page.locator('#video-fit').get_attribute('aria-label')=='Video size: Fit'
+  assert 'Cannot change video size' in page.locator('#toast').inner_text() and page.evaluate('nativeState')=='PLAYING'
+  page.evaluate('(()=>{webapis.avplay.setDisplayMethod=__displayMethod;})()')
+  checks['video_size_failure_is_visible_and_preserves_previous_mode']=True
   page.evaluate("MovieBoxTV.player.reveal();document.getElementById('play-pause').focus()")
   page.keyboard.press('ArrowUp')
   assert not page.locator('#episode-drawer').is_visible() and page.evaluate('nativeState')=='PLAYING'
@@ -143,5 +164,5 @@ try:
   assert not errors,errors;checks['no_javascript_exceptions']=True
   page.screenshot(path=str(OUT/'end-details.png'));browser.close()
 finally:
- server.shutdown();result={'scope':'Headless Edge, fixture API, mocked AVPlay. Credits timing is not available for every upstream title.','checks':checks,'passed':len(checks)==20 and not errors}
+ server.shutdown();result={'scope':'Headless Edge, fixture API, mocked AVPlay. Credits timing is not available for every upstream title.','checks':checks,'passed':len(checks)==23 and not errors}
  (OUT/'result.json').write_text(json.dumps(result,indent=2),encoding='utf-8');print(json.dumps(result,indent=2))

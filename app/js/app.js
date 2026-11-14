@@ -315,6 +315,6 @@
   $('exit-confirm').onclick = function () { persist(true); try { if (global.tizen && tizen.application) tizen.application.getCurrentApplication().exit(); else { cancelExit(); toast('You can close this preview tab. Your place is saved.'); } } catch (_) { cancelExit(); } };
   global.addEventListener('pagehide',function () { captureCatalogueView();catalogueStore.flush(); if (player.active) saveProgress(player.position,player.duration); flushPersistence(); });
   document.addEventListener('visibilitychange',function () { if (document.hidden) { if (player.active) saveProgress(player.position,player.duration); flushPersistence(); } });
-  global.MovieBoxTV = {api:api,player:player,navigation:navigation,state:state,openDetail:openDetail,browse:browse,watch:watch,allSubjects:allSubjects,persistenceMetrics:persistenceMetrics,flushPersistence:flushPersistence,releases:releases,carousel:carousel,catalogueStore:catalogueStore,nextEpisode:nextEpisode,openEpisodeDrawer:openEpisodeDrawer};
+  global.MovieBoxTV = {toast:toast,api:api,player:player,navigation:navigation,state:state,openDetail:openDetail,browse:browse,watch:watch,allSubjects:allSubjects,persistenceMetrics:persistenceMetrics,flushPersistence:flushPersistence,releases:releases,carousel:carousel,catalogueStore:catalogueStore,nextEpisode:nextEpisode,openEpisodeDrawer:openEpisodeDrawer};
   browse('home'); navigation.focus(document.querySelector('[data-nav="home"]'));
 })(window);
