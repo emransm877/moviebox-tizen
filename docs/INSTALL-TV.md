@@ -13,7 +13,7 @@ Samsung's installation checks.
 
 ## Install from a Windows PC
 
-1. Download and extract `MovieBox-TV-0.8.0-install-bundle.zip` from Releases.
+1. Download and extract `MovieBox-TV-0.8.1-install-bundle.zip` from Releases.
 2. Install official Tizen Studio, Samsung TV Extension and Samsung Certificate
    Extension. Keep the PC and TV on the same network.
 3. Enable TV Developer Mode, enter this PC's LAN address as Host PC IP, and restart

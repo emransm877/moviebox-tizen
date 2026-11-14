@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.8.1 — 2026-11-14
+
+- Restrict the episode Up shortcut to hidden player controls; visible controls and open menus keep normal navigation.
+- Compact the season selectors and TV option popup. Align the desktop More menu labels and pad the subtitle timing value.
+
 ## 0.8.0 — 2026-11-14
 
 - Put the timeline above one inline control row using the upstream Stremio SVG icons with bundled MIT attribution.

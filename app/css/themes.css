@@ -62,3 +62,5 @@ button:focus-visible,input:focus-visible,select:focus-visible,[tabindex]:focus-v
 @media(max-width:1400px){.player-controls{padding:10px 15px 12px}.transport-row{gap:5px}.transport-row button.icon-button,.transport-row .player-icon-select{width:48px;min-width:48px;height:52px;flex-basis:48px;padding:10px}#volume-slider{width:80px;flex-basis:80px}#player-clock{font-size:14px}.player-more{bottom:145px}}
 @media(prefers-reduced-motion:reduce){.episode-drawer,.player-more{animation:none}}
 @media(max-width:1400px){#player-controls .player-icon-select{min-width:48px;width:48px}}
+#player-season-select{width:240px;min-width:180px;max-width:100%;align-self:flex-start}
+.player-more{width:380px;padding:20px}.player-more label{margin:18px 0 8px}.player-more #subtitle-delay{width:180px;min-width:140px}.player-more header h3{font-size:23px}

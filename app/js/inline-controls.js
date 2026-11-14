@@ -10,7 +10,7 @@
   nav.handler=function(key,event,input){
     if(!more.hidden){if(key==='Back'||key==='Escape'){closeMore();return true;}if(/^Media/.test(key))return player.handleKey(key,event);return false;}
     if(key==='ArrowUp'&&event&&event.repeat&&shortcutDown)return true;
-    if(key==='ArrowUp'&&player.active&&$('episode-drawer').hidden&&Number((player.options.canonicalSubject||player.subject||{}).subjectType)===2&&document.activeElement.tagName!=='SELECT'){
+    if(key==='ArrowUp'&&player.active&&player.page.classList.contains('controls-hidden')&&$('episode-drawer').hidden&&Number((player.options.canonicalSubject||player.subject||{}).subjectType)===2&&document.activeElement.tagName!=='SELECT'){
       if(!event||!event.repeat){shortcutDown=true;app.openEpisodeDrawer();}return true;
     }
     return originalHandler(key,event,input);

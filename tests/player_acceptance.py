@@ -51,9 +51,14 @@ try:
   page.locator('#player-controls').screenshot(path=str(OUT/'inline-controls.png'))
   page.set_viewport_size({'width':1920,'height':1080})
   checks['inline_player_controls_fit_one_row_at_1920_and_1280']=True
+  page.evaluate("MovieBoxTV.player.reveal();document.getElementById('play-pause').focus()")
+  page.keyboard.press('ArrowUp')
+  assert not page.locator('#episode-drawer').is_visible() and page.evaluate('nativeState')=='PLAYING'
+  checks['up_navigates_visible_controls_without_opening_episode_drawer']=True
   page.evaluate("MovieBoxTV.player.page.classList.add('controls-hidden');MovieBoxTV.player.page.focus()")
   page.keyboard.down('ArrowUp');page.wait_for_timeout(260)
   assert page.locator('#episode-drawer').is_visible() and page.evaluate('nativeState')=='PLAYING'
+  assert page.locator('#player-season-select').bounding_box()['width']<=260
   assert abs(page.locator('#episode-drawer').bounding_box()['x']+page.locator('#episode-drawer').bounding_box()['width']-1920)<2
   page.keyboard.down('ArrowUp');page.keyboard.up('ArrowUp')
   page.keyboard.press('Escape');assert not page.locator('#episode-drawer').is_visible()
@@ -122,5 +127,5 @@ try:
   assert not errors,errors;checks['no_javascript_exceptions']=True
   page.screenshot(path=str(OUT/'end-details.png'));browser.close()
 finally:
- server.shutdown();result={'scope':'Headless Edge, fixture API, mocked AVPlay. Credits timing is not available for every upstream title.','checks':checks,'passed':len(checks)==17 and not errors}
+ server.shutdown();result={'scope':'Headless Edge, fixture API, mocked AVPlay. Credits timing is not available for every upstream title.','checks':checks,'passed':len(checks)==18 and not errors}
  (OUT/'result.json').write_text(json.dumps(result,indent=2),encoding='utf-8');print(json.dumps(result,indent=2))

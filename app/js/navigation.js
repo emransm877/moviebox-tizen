@@ -71,7 +71,7 @@
     var shade = document.createElement('div'); shade.className = 'modal-shade remote-picker'; shade.setAttribute('role','dialog'); shade.setAttribute('aria-modal','true');
     var panel = document.createElement('div'); panel.className = 'modal';
     var longest=Array.prototype.reduce.call(select.options,function(width,option){return Math.max(width,option.textContent.length);},0);
-    panel.style.width=Math.min(720,Math.max(420,longest*12+100))+'px';
+    panel.style.width=Math.min(600,Math.max(280,longest*12+88))+'px';
     var title = document.createElement('h2'); title.textContent = select.getAttribute('aria-label') || (select.labels && select.labels[0] ? select.labels[0].textContent.split('\n')[0].trim() : 'Choose an option'); panel.appendChild(title);
     var choices = document.createElement('div'); choices.className = 'remote-picker-options'; panel.appendChild(choices);
     Array.prototype.forEach.call(select.options,function (option) {
