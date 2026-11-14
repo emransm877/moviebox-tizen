@@ -93,3 +93,12 @@ those AVPlay calls are explicitly mocked. The final widget excludes diagnostics.
 ## 0.7.2 installation — 2026-11-14
 
 The normal release widget was signed locally with the test TV certificate, installed successfully as an update, and launched on Samsung UA43U8000FRSER / Tizen 9 through SDB. No uninstall, data reset, or diagnostic build was used. This check confirms installation/launch; the icon/input behavior is covered by the browser fixture tests and has not yet received a new physical remote acceptance test. Personal signing material is excluded from public packages.
+
+
+## Native TV player checks — 2026-11-14
+
+The current 0.7.2 player code was checked on Samsung U8000F / Tizen 9 using a temporary private diagnostic build and a legal local H.264 fixture. The saved Eclipse theme matched the first rendered frame. A change to Prism persisted across process exit/relaunch and also matched the first frame. The original theme was restored.
+
+Native AVPlay accepted successive injected OK inputs for pause and resume without waiting for the controls to hide. The inputs were injected 118 ms apart; this is not a measurement of the physical remote's radio/IR latency. Seeking near the fixture's actual end led to the native completion callback and a return to the title details. No real title completion was simulated. Stored saved-list and history counts remained unchanged, and no runtime errors were reported during this check.
+
+The normal signed 0.7.2 release was reinstalled and launched afterwards. The private diagnostic listener was stopped. Public release widgets and bundles remain unchanged and contain no diagnostic code, personal certificate or signature. Series progression and the episode drawer retain browser fixture coverage; a physical remote acceptance test for every control/title is not claimed.
