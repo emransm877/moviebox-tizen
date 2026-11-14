@@ -14,3 +14,6 @@ RFC 1321 and RFC 2104 for the service's existing protocol. They are not used
 for password storage, certificate issuance or application code signing.
 
 Playwright is an optional development/test tool, not part of the TV payload.
+
+
+Player icons use the MIT-licensed Stremio Icons by Smart Code Ltd. and contributors. Original vector shapes are retained and recoloured. Source and full notice are bundled in assets/player-icons/SOURCE.json and LICENSE.txt.

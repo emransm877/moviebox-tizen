@@ -236,7 +236,7 @@
 
   var continuationPending = false, episodeTransition = false, episodeDrawerOpen = false, drawerReturnFocus = null, nextUpDismissed = '', nextPrefetchKey = '';
   function nextSelection() { if (!playerSelection || Number(playerSelection.subject.subjectType) !== 2) return null; return global.MovieBoxSeriesPolicy.next((detail && detail.resource || {}).seasons || [],playerSelection.season,playerSelection.episode); }
-  function hideEpisodeDrawer() { if (!episodeDrawerOpen) return; if (navigation.picker) navigation.closePicker(); episodeDrawerOpen = false; $('episode-drawer').hidden = true; navigation.scope($('player-page')); navigation.focus(drawerReturnFocus && drawerReturnFocus.isConnected ? drawerReturnFocus : $('play-pause')); }
+  function hideEpisodeDrawer() { if (!episodeDrawerOpen) return; if (navigation.picker) navigation.closePicker(); episodeDrawerOpen = false; $('episode-drawer').hidden = true; player.reveal(); navigation.scope($('player-page')); navigation.focus(drawerReturnFocus && drawerReturnFocus.isConnected ? drawerReturnFocus : $('play-pause')); }
   function leavePlayer() { continuationPending = false; if (navigation.picker) navigation.closePicker(); hideEpisodeDrawer(); $('next-up').hidden = true; episodeTransition = false; generation++; player.stop(); playerSelection = null; showPage('detail'); selectionChanged(); navigation.focus($('watch-button')); setTimeout(function () { releases.check(false); },2000); }
   function finishPlayback(message) { leavePlayer(); $('detail-notice').textContent = message || 'Finished · Your place is saved.'; }
   function nextEpisode() {

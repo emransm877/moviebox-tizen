@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.8.0 — 2026-11-14
+
+- Put the timeline above one inline control row using the upstream Stremio SVG icons with bundled MIT attribution.
+- Keep quality, subtitle and audio choices in accessible icon selectors; keep timing and downloads in More on Windows.
+- One Up-arrow press opens the episode panel from the right, including when player controls are hidden.
+- Retain series autoplay, resume, fullscreen, subtitle/audio preferences, library and themes.
+- See [inline player behavior](docs/INLINE_PLAYER.md).
+
 ## 0.7.2 — 2026-11-14
 
 - Use compact icons for player Play/Pause and Seasons & episodes, with accessible names and tooltips. Retain time and seek labels.

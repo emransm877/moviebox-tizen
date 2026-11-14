@@ -1,0 +1,24 @@
+{
+  "repository": "https://github.com/Stremio/stremio-icons",
+  "commit": "943899a356eb220da2141ab5a9057da7283d3020",
+  "license": "MIT",
+  "modification": "Recoloured to player foreground; original vector geometry retained.",
+  "icons": [
+    "play",
+    "pause",
+    "volume-high",
+    "volume-mute",
+    "skip-back",
+    "skip-forward",
+    "settings-outline",
+    "subtitles",
+    "audio-tracks",
+    "episodes",
+    "video-scale-fit",
+    "video-scale-crop",
+    "video-scale-stretch",
+    "maximize",
+    "more-horizontal",
+    "download"
+  ]
+}

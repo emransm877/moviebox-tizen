@@ -92,8 +92,8 @@
     this.bufferTimer = setTimeout(function () { self.bufferTimer = null; if (self.active && self.bufferWaiting && self.epoch === epoch) self.loading(true,self.bufferText); },seeking ? 900 : 450);
   };
   Player.prototype.error = function (message) { this.loading(false); this.reveal(); if (this.callbacks.onError) this.callbacks.onError(message); };
-  Player.prototype.reveal = function () { if (!this.active) return; this.page.classList.remove('controls-hidden'); clearTimeout(this.hideTimer); var self = this; this.hideTimer = setTimeout(function () { if (document.querySelector('.remote-picker') || document.activeElement.closest('#next-up,#episode-drawer')) return self.reveal(); self.page.classList.add('controls-hidden'); self.page.focus(); }, 3500); };
-  Player.prototype.updatePlayButton = function () { var button=$('play-pause'),label=this.paused?'Play':'Pause';button.setAttribute('aria-label',label);button.title=label;button.querySelector('path').setAttribute('d',this.paused?'M8 4l13 8-13 8z':'M8 5v14M16 5v14'); };
+  Player.prototype.reveal = function () { if (!this.active) return; this.page.classList.remove('controls-hidden'); clearTimeout(this.hideTimer); var self = this; this.hideTimer = setTimeout(function () { if (document.querySelector('.remote-picker') || document.activeElement.closest('#next-up,#episode-drawer,#player-more')) return self.reveal(); self.page.classList.add('controls-hidden'); self.page.focus(); }, 3500); };
+  Player.prototype.updatePlayButton = function () { var button=$('play-pause'),label=this.paused?'Play':'Pause';button.setAttribute('aria-label',label);button.title=label;button.querySelector('img').src='assets/player-icons/'+(this.paused?'play':'pause')+'.svg'; };
   Player.prototype.open = function (subject, streams, options) {
     options = options || {}; this.pendingAudioRestart = null; $('restart-audio').hidden = true;
     this.subject = subject; this.baseSubject = options.canonicalSubject || subject; this.streams = streams; this.options = options; this.key = options.key || String(subject.subjectId); this.subtitleKey = String(subject.subjectId) + ':' + Number(options.season || 0) + ':' + Number(options.episode || 0); this.preference = options.quality || 'auto'; this.active = true; this.page.hidden = false; this.page.tabIndex = -1; this.cues = []; this.captionEpoch++; this.audioEpoch++; this.audioTracks = [];
@@ -131,7 +131,7 @@
         var agent = (stream.headers || {})['User-Agent'] || this.api.streamUserAgent;
         if (agent) this.av.setStreamingProperty('USER_AGENT', agent);
         this.av.setDisplayRect(0,0,window.innerWidth,window.innerHeight);
-        this.av.setDisplayMethod('PLAYER_DISPLAY_MODE_LETTER_BOX');
+        this.av.setDisplayMethod(this.displayMode || 'PLAYER_DISPLAY_MODE_LETTER_BOX');
         this.av.setListener({
           onbufferingstart:function () { if (epoch === self.epoch) self.buffering(); },
           onbufferingprogress:function (percent) { if (epoch === self.epoch) self.bufferingIndicator(percent); },

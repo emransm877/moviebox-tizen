@@ -43,6 +43,25 @@ try:
   def ended():
     page.evaluate('var previousEnd=nativeListener.onstreamcompleted;nativePosition=100000;MovieBoxTV.player.tick(100000);previousEnd();previousEnd();')
   start()
+  for width in (1920,1280):
+    page.set_viewport_size({'width':width,'height':1080});page.wait_for_timeout(80)
+    boxes=page.locator('#player-controls .transport-row button:not([hidden]),#player-controls .transport-row select,#player-clock,#volume-slider').evaluate_all('els=>els.filter(e=>!e.hidden).map(e=>{var r=e.getBoundingClientRect();return {y:r.y+r.height/2,left:r.left,right:r.right};})')
+    assert max(b['y'] for b in boxes)-min(b['y'] for b in boxes)<3,boxes
+    assert all(b['left']>=0 and b['right']<=width for b in boxes),boxes
+  page.locator('#player-controls').screenshot(path=str(OUT/'inline-controls.png'))
+  page.set_viewport_size({'width':1920,'height':1080})
+  checks['inline_player_controls_fit_one_row_at_1920_and_1280']=True
+  page.evaluate("MovieBoxTV.player.page.classList.add('controls-hidden');MovieBoxTV.player.page.focus()")
+  page.keyboard.down('ArrowUp');page.wait_for_timeout(260)
+  assert page.locator('#episode-drawer').is_visible() and page.evaluate('nativeState')=='PLAYING'
+  assert abs(page.locator('#episode-drawer').bounding_box()['x']+page.locator('#episode-drawer').bounding_box()['width']-1920)<2
+  page.keyboard.down('ArrowUp');page.keyboard.up('ArrowUp')
+  page.keyboard.press('Escape');assert not page.locator('#episode-drawer').is_visible()
+  checks['single_up_press_opens_right_drawer_without_pausing']=True
+  page.locator('#player-more-button').click();assert page.locator('#subtitle-delay').is_visible()
+  assert page.evaluate('nativeState')=='PLAYING'
+  page.keyboard.press('Escape');assert not page.locator('#player-more').is_visible()
+  checks['more_options_and_back_preserve_playback']=True
   page.evaluate("MovieBoxTV.player.page.classList.add('controls-hidden');MovieBoxTV.player.page.focus()")
   page.keyboard.press('Enter');assert page.evaluate('nativeState')=='PAUSED'
   page.keyboard.press('Enter');assert page.evaluate('nativeState')=='PLAYING'
@@ -103,5 +122,5 @@ try:
   assert not errors,errors;checks['no_javascript_exceptions']=True
   page.screenshot(path=str(OUT/'end-details.png'));browser.close()
 finally:
- server.shutdown();result={'scope':'Headless Edge, fixture API, mocked AVPlay. Credits timing is not available for every upstream title.','checks':checks,'passed':len(checks)==14 and not errors}
+ server.shutdown();result={'scope':'Headless Edge, fixture API, mocked AVPlay. Credits timing is not available for every upstream title.','checks':checks,'passed':len(checks)==17 and not errors}
  (OUT/'result.json').write_text(json.dumps(result,indent=2),encoding='utf-8');print(json.dumps(result,indent=2))
