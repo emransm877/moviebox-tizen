@@ -43,3 +43,5 @@ button:focus-visible,input:focus-visible,select:focus-visible,[tabindex]:focus-v
 @keyframes episode-drawer-in{from{transform:translateX(20px);opacity:.5}to{transform:translateX(0);opacity:1}}
 @media(max-width:1400px){.episode-drawer{width:560px;padding:26px}.next-up{right:30px;width:370px;bottom:230px}.controls-hidden .next-up{bottom:155px}}
 @media(prefers-reduced-motion:reduce){.remote-picker,.remote-picker .modal,.next-up,.episode-drawer{animation:none}button,select,input{transition:none}}
+
+.transport-row button.icon-button{width:64px;height:58px;min-width:64px;padding:14px;display:inline-flex;align-items:center;justify-content:center}.icon-button svg{width:27px;height:27px;stroke:currentColor;stroke-width:1.8;fill:none;stroke-linecap:round;stroke-linejoin:round;pointer-events:none}

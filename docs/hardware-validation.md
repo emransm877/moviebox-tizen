@@ -88,3 +88,8 @@ handler check selected one Continue watching title, then cancelled selection;
 stored history was 10 entries before and after. No production history was removed.
 Browser fixture tests cover actual deletion, Select all, Undo and page reload;
 those AVPlay calls are explicitly mocked. The final widget excludes diagnostics.
+
+
+## 0.7.2 installation — 2026-11-14
+
+The normal release widget was signed locally with the test TV certificate, installed successfully as an update, and launched on Samsung UA43U8000FRSER / Tizen 9 through SDB. No uninstall, data reset, or diagnostic build was used. This check confirms installation/launch; the icon/input behavior is covered by the browser fixture tests and has not yet received a new physical remote acceptance test. Personal signing material is excluded from public packages.

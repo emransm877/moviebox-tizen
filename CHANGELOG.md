@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.7.2 — 2026-11-14
+
+- Use compact icons for player Play/Pause and Seasons & episodes, with accessible names and tooltips. Retain time and seek labels.
+
 ## 0.7.1 — 2026-11-14
 
 - Remove the permanent Next transport button. Series continue automatically; the near-end Up next card remains. Movies return to details when finished.

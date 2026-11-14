@@ -93,7 +93,7 @@
   };
   Player.prototype.error = function (message) { this.loading(false); this.reveal(); if (this.callbacks.onError) this.callbacks.onError(message); };
   Player.prototype.reveal = function () { if (!this.active) return; this.page.classList.remove('controls-hidden'); clearTimeout(this.hideTimer); var self = this; this.hideTimer = setTimeout(function () { if (document.querySelector('.remote-picker') || document.activeElement.closest('#next-up,#episode-drawer')) return self.reveal(); self.page.classList.add('controls-hidden'); self.page.focus(); }, 3500); };
-  Player.prototype.updatePlayButton = function () { $('play-pause').textContent = this.paused ? '▶ Play' : 'Ⅱ Pause'; };
+  Player.prototype.updatePlayButton = function () { var button=$('play-pause'),label=this.paused?'Play':'Pause';button.setAttribute('aria-label',label);button.title=label;button.querySelector('path').setAttribute('d',this.paused?'M8 4l13 8-13 8z':'M8 5v14M16 5v14'); };
   Player.prototype.open = function (subject, streams, options) {
     options = options || {}; this.pendingAudioRestart = null; $('restart-audio').hidden = true;
     this.subject = subject; this.baseSubject = options.canonicalSubject || subject; this.streams = streams; this.options = options; this.key = options.key || String(subject.subjectId); this.subtitleKey = String(subject.subjectId) + ':' + Number(options.season || 0) + ':' + Number(options.episode || 0); this.preference = options.quality || 'auto'; this.active = true; this.page.hidden = false; this.page.tabIndex = -1; this.cues = []; this.captionEpoch++; this.audioEpoch++; this.audioTracks = [];
