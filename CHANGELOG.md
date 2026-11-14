@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.7.0 — 2026-11-14
+
+- Automatic next series episode, including season boundaries; final/unavailable playback returns to details.
+- Near-end next-up card without guessing or skipping unknown credits.
+- Immediate video/OK playback toggles, refined dropdowns, and TV season/episode drawer.
+- TV-only lifted focus and saved theme before first paint.
+- Existing library, catalogue cache, themes, audio, subtitles and quality controls retained.
+- See [exact behavior and validation limits](docs/PLAYER_BEHAVIOR.md).
+
 ## 0.6.1 — 2026-11-14
 
 - Retain the last fully cached page boundary when a long catalogue exceeds the metadata budget. Returning to that view resumes Load more at the first uncached page, without skipping results.

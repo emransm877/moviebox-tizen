@@ -10,6 +10,8 @@
   function key(value) { return Object.prototype.hasOwnProperty.call(themes,value) ? value : 'obsidian'; }
   function apply(value) {
     value = key(value); document.documentElement.dataset.theme = value;
+    document.documentElement.style.backgroundColor=({obsidian:'#0b1016',orbital:'#070f20',prism:'#100c20',aurora:'#edf3f0',eclipse:'#100e0b'})[value];
+    try{localStorage.setItem('moviebox-tv-theme',value);}catch(_){}
     var logo = document.querySelector('.brand img');
     if (logo) logo.src = 'assets/moviebox-logo-' + value + '.svg';
     var hint = document.getElementById('theme-description');

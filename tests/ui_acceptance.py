@@ -149,11 +149,10 @@ def run():
             assert page.evaluate("MovieBoxTV.state.audioPreferences.series1.subjectId")=='series-hi'
             assert page.evaluate("Object.keys(MovieBoxTV.state.history).some(k=>k.startsWith('series-hi:'))")==False
             checks['audio_preference_and_canonical_history_preserved']=True
-            page.locator('#autoplay-next').focus()
-            previous_autoplay=page.locator('#autoplay-next').is_checked()
-            page.keyboard.press('Enter')
-            assert page.locator('#autoplay-next').is_checked()!=previous_autoplay
-            checks['remote_checkbox_activation']=True
+            assert page.locator('#autoplay-next').count()==0
+            assert page.locator('#preferred-autoplay').count()==0
+            assert page.evaluate('MovieBoxTV.player.options.autoplay') is True
+            checks['series_autoplay_is_default_without_checkbox']=True
             page.evaluate("document.dispatchEvent(new KeyboardEvent('keydown',{key:'Unidentified',keyCode:415,bubbles:true,cancelable:true}))")
             assert page.evaluate('nativeState')=='PLAYING'
             page.evaluate("document.dispatchEvent(new KeyboardEvent('keydown',{key:'Unidentified',keyCode:19,bubbles:true,cancelable:true}))")

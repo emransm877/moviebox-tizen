@@ -54,7 +54,7 @@
     if (!entry) { this.invalidate(); entry = this.layout().find(function (record) { return record.element === element; }); }
     if (!entry) return;
     if (document.activeElement !== element) { try { element.focus({preventScroll:true}); } catch (_) { element.focus(); } this.metrics.focusChanges++; }
-    var main = element.closest('#main-content'), scrollArea = element.closest('.remote-picker-options') || main, bounds = scrollArea ? scrollArea.getBoundingClientRect() : {top:0,bottom:global.innerHeight,left:0,right:global.innerWidth};
+    var main = element.closest('#main-content'), scrollArea = element.closest('.remote-picker-options,.player-episode-list') || main, bounds = scrollArea ? scrollArea.getBoundingClientRect() : {top:0,bottom:global.innerHeight,left:0,right:global.innerWidth};
     if (main) {
       var firstTop = this.entries.filter(function (record) { return main.contains(record.element); }).reduce(function (top,record) { return Math.min(top,record.top); },Infinity);
       if (entry.top <= firstTop + 8 && main.scrollTop > 0) { main.scrollTop = 0; this.invalidate(); return; }
@@ -70,6 +70,8 @@
     if (this.picker) this.closePicker();
     var shade = document.createElement('div'); shade.className = 'modal-shade remote-picker'; shade.setAttribute('role','dialog'); shade.setAttribute('aria-modal','true');
     var panel = document.createElement('div'); panel.className = 'modal';
+    var longest=Array.prototype.reduce.call(select.options,function(width,option){return Math.max(width,option.textContent.length);},0);
+    panel.style.width=Math.min(720,Math.max(420,longest*12+100))+'px';
     var title = document.createElement('h2'); title.textContent = select.getAttribute('aria-label') || (select.labels && select.labels[0] ? select.labels[0].textContent.split('\n')[0].trim() : 'Choose an option'); panel.appendChild(title);
     var choices = document.createElement('div'); choices.className = 'remote-picker-options'; panel.appendChild(choices);
     Array.prototype.forEach.call(select.options,function (option) {

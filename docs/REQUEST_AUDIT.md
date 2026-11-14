@@ -59,3 +59,8 @@ Five selectable, persistent themes and a shuffled latest-movies/TV carousel are 
 ## Cached catalogues and history management
 
 Movies/TV Shows now restore cached filtered pages and position, with background refresh. Continue watching supports single/multiple/all removal and Undo while preserving My list. Details use compact action spacing. See [behavior and evidence](CACHE_AND_HISTORY.md).
+
+
+## Player revision 0.7.0
+
+See [player behavior](PLAYER_BEHAVIOR.md) for the new end flow, input, themes, TV focus/drawer, and credits timing limitation. This revision has browser TV coverage; physical TV installation is pending its SDB connection.
