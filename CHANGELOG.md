@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.7.1 — 2026-11-14
+
+- Remove the permanent Next transport button. Series continue automatically; the near-end Up next card remains. Movies return to details when finished.
+
 ## 0.7.0 — 2026-11-14
 
 - Automatic next series episode, including season boundaries; final/unavailable playback returns to details.

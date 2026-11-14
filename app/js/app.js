@@ -311,7 +311,7 @@
   $('watch-button').onclick = watch;
   $('save-button').onclick = function () { if (!current) return; var id = String(current.subjectId); if (state.saved[id]) delete state.saved[id]; else state.saved[id] = librarySubject(current); persist(); $('save-button').textContent = state.saved[id] ? '✓ Saved' : '＋ My list'; };
   $('trailer-button').onclick = function () { var trailer = ((current || {}).trailer || {}).videoAddress || {}; if (!trailer.url) return; playerSelection = null; showPage('player'); player.open({subjectId:'trailer',title:'Trailer · ' + current.title},[{url:trailer.url,resolutions:trailer.height || 480,duration:trailer.duration,size:trailer.size,id:'trailer'}],{subtitleEnabled:false,hasNext:false}); };
-  $('player-back').onclick = leavePlayer; $('next-button').onclick = nextEpisode; $('exit-cancel').onclick = cancelExit;
+  $('player-back').onclick = leavePlayer; $('exit-cancel').onclick = cancelExit;
   $('exit-confirm').onclick = function () { persist(true); try { if (global.tizen && tizen.application) tizen.application.getCurrentApplication().exit(); else { cancelExit(); toast('You can close this preview tab. Your place is saved.'); } } catch (_) { cancelExit(); } };
   global.addEventListener('pagehide',function () { captureCatalogueView();catalogueStore.flush(); if (player.active) saveProgress(player.position,player.duration); flushPersistence(); });
   document.addEventListener('visibilitychange',function () { if (document.hidden) { if (player.active) saveProgress(player.position,player.duration); flushPersistence(); } });

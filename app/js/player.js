@@ -98,7 +98,7 @@
     options = options || {}; this.pendingAudioRestart = null; $('restart-audio').hidden = true;
     this.subject = subject; this.baseSubject = options.canonicalSubject || subject; this.streams = streams; this.options = options; this.key = options.key || String(subject.subjectId); this.subtitleKey = String(subject.subjectId) + ':' + Number(options.season || 0) + ':' + Number(options.episode || 0); this.preference = options.quality || 'auto'; this.active = true; this.page.hidden = false; this.page.tabIndex = -1; this.cues = []; this.captionEpoch++; this.audioEpoch++; this.audioTracks = [];
     $('subtitle-overlay').textContent = ''; $('now-title').textContent = subject.title + (options.season ? ' · S' + options.season + ' E' + options.episode : '');
-    $('next-button').hidden = !options.hasNext; $('episode-browser').hidden = Number((options.canonicalSubject || subject).subjectType) !== 2;
+    $('episode-browser').hidden = Number((options.canonicalSubject || subject).subjectType) !== 2;
     this.populateQualities(); this.populateAudioTracks();
     var speed = global.navigator.connection && navigator.connection.downlink;
     var stream = options.initialStream || chooseQuality(streams,this.preference,speed);

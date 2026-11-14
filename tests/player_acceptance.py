@@ -79,7 +79,7 @@ try:
   checks['near_end_next_up_prompt_does_not_skip_or_pause_content']=True
   ended();page.wait_for_function('MovieBoxTV.player.options.episode===2 && nativeState==="PLAYING"')
   assert page.evaluate("__avcalls.filter(c=>c[0]==='open').length")==before+1
-  assert page.locator('#autoplay-next,#preferred-autoplay').count()==0
+  assert page.locator('#autoplay-next,#preferred-autoplay,#next-button').count()==0
   checks['series_default_autoplay_advances_once_without_checkbox']=True
   start(season=1,episode=65);ended()
   page.wait_for_function('MovieBoxTV.player.options.season===2 && MovieBoxTV.player.options.episode===1 && nativeState==="PLAYING"')

@@ -1,7 +1,7 @@
 /* Optional release notices only. This module never downloads or installs executable code. */
 (function (global) {
   'use strict';
-  var REPOSITORY = 'emransm877/moviebox-tizen', VERSION = '0.7.0', DAY = 86400000;
+  var REPOSITORY = 'emransm877/moviebox-tizen', VERSION = '0.7.1', DAY = 86400000;
   var STORAGE = 'moviebox-tv-update-preferences';
   function newer(candidate, current) {
     var a = /^v?(\d+)\.(\d+)\.(\d+)$/.exec(String(candidate)), b = /^v?(\d+)\.(\d+)\.(\d+)$/.exec(String(current));
