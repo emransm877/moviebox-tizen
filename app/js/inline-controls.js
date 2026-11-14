@@ -25,6 +25,7 @@
   document.addEventListener('pointerdown',function(event){if(!volumePopup.hidden&&!volumePopup.contains(event.target)&&!$('mute-button').contains(event.target))closeVolume();},true);
   var fitModes=['PLAYER_DISPLAY_MODE_LETTER_BOX','PLAYER_DISPLAY_MODE_FULL_SCREEN','PLAYER_DISPLAY_MODE_AUTO_ASPECT_RATIO'];
   $('video-fit').onclick=function(){
+    if(player.deferUntilSeek('display',function(){$('video-fit').onclick();}))return;
     var next=(fitIndex+1)%3;
     try{
       if(player.native)player.av.setDisplayMethod(fitModes[next]);else player.video.style.objectFit=['contain','cover','fill'][next];

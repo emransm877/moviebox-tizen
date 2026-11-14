@@ -20,6 +20,7 @@ jobs:
       - run: python tests/themes_acceptance.py
       - run: python tests/cache_history_acceptance.py
       - run: python tests/player_acceptance.py
+      - run: python tests/seek_lifecycle_acceptance.py
       - run: python tools/package.py
       - uses: actions/upload-artifact@v4
         with:

@@ -84,7 +84,7 @@
   }
   Player.prototype.loading = function (show, text) { if (!show) { clearTimeout(this.bufferTimer); this.bufferTimer = null; this.bufferWaiting = false; } $('player-loading').hidden = !show; if (text) $('loading-text').textContent = text; };
   Player.prototype.bufferingIndicator = function (percent) {
-    this.bufferText = percent === undefined ? 'Buffering…' : 'Buffering · ' + percent + '%';
+    this.bufferText = percent === undefined ? 'Bufferingâ€¦' : 'Buffering Â· ' + percent + '%';
     if (this.preparing) return;
     if (this.bufferWaiting) { if (!$('player-loading').hidden) $('loading-text').textContent = this.bufferText; return; }
     this.bufferWaiting = true;
@@ -95,9 +95,9 @@
   Player.prototype.reveal = function () { if (!this.active) return; this.page.classList.remove('controls-hidden'); clearTimeout(this.hideTimer); var self = this; this.hideTimer = setTimeout(function () { if (document.querySelector('.remote-picker') || document.activeElement.closest('#next-up,#episode-drawer,#player-more,#volume-popover')) return self.reveal(); self.page.classList.add('controls-hidden'); self.page.focus(); }, 3500); };
   Player.prototype.updatePlayButton = function () { var button=$('play-pause'),label=this.paused?'Play':'Pause';button.setAttribute('aria-label',label);button.title=label;button.querySelector('img').src='assets/player-icons/'+(this.paused?'play':'pause')+'.svg'; };
   Player.prototype.open = function (subject, streams, options) {
-    options = options || {}; this.pendingAudioRestart = null; $('restart-audio').hidden = true;
+    options = options || {}; this.pendingSeekActions = {}; this.seekRecoveryUsed = false; this.pendingAudioRestart = null; $('restart-audio').hidden = true;
     this.subject = subject; this.baseSubject = options.canonicalSubject || subject; this.streams = streams; this.options = options; this.key = options.key || String(subject.subjectId); this.subtitleKey = String(subject.subjectId) + ':' + Number(options.season || 0) + ':' + Number(options.episode || 0); this.preference = options.quality || 'auto'; this.active = true; this.page.hidden = false; this.page.tabIndex = -1; this.cues = []; this.captionEpoch++; this.audioEpoch++; this.audioTracks = [];
-    $('subtitle-overlay').textContent = ''; $('now-title').textContent = subject.title + (options.season ? ' · S' + options.season + ' E' + options.episode : '');
+    $('subtitle-overlay').textContent = ''; $('now-title').textContent = subject.title + (options.season ? ' Â· S' + options.season + ' E' + options.episode : '');
     $('episode-browser').hidden = Number((options.canonicalSubject || subject).subjectType) !== 2;
     this.populateQualities(); this.populateAudioTracks();
     var speed = global.navigator.connection && navigator.connection.downlink;
@@ -108,13 +108,13 @@
     this.reveal();
   };
   Player.prototype.start = function (stream, position, paused) {
-    var self = this, epoch = ++this.epoch; this.resetSeek(); this.preparing = true; this.seekDiagnostics.epoch = epoch; this.seekDiagnostics.state = 'preparing'; this.stream = stream; this.completed = false; this.endNotified = false; this.position = Math.max(0,Math.round(Number(position) || 0)); this.duration = Math.max(0,Math.round(Number(stream.duration || 0) * 1000)); this.paused = !!paused; this.lastQualityChange = Date.now(); this.loading(true, 'Opening ' + stream.resolutions + 'p…');
-    $('quality-select').options[0].text = 'Auto · ' + stream.resolutions + 'p'; this.updatePlayButton();
+    var self = this, epoch = ++this.epoch; this.resetSeek(); this.preparing = true; this.seekDiagnostics.epoch = epoch; this.seekDiagnostics.state = 'preparing'; this.stream = stream; this.completed = false; this.endNotified = false; this.position = Math.max(0,Math.round(Number(position) || 0)); this.duration = Math.max(0,Math.round(Number(stream.duration || 0) * 1000)); this.paused = !!paused; this.lastQualityChange = Date.now(); this.loading(true, 'Opening ' + stream.resolutions + 'pâ€¦');
+    $('quality-select').options[0].text = 'Auto Â· ' + stream.resolutions + 'p'; this.updatePlayButton();
     function prepared() {
       if (epoch !== self.epoch || !self.active) return;
       self.duration = self.native ? self.av.getDuration() : self.video.duration * 1000;
       self.preparing = false;
-      function begin() { if (epoch !== self.epoch) return; self.av.play(); self.populateAudioTracks(true); if (self.paused) self.av.pause(); self.loading(false); self.updateTimeDisplay(); self.updatePlayButton(); if (self.callbacks.onStarted) self.callbacks.onStarted(); }
+      function begin() { if (epoch !== self.epoch) return; self.av.play(); self.populateAudioTracks(true); if (self.paused) self.av.pause(); self.loading(false); self.updateTimeDisplay(); self.updatePlayButton(); if (self.callbacks.onStarted) self.callbacks.onStarted(); self.flushSeekActions(); }
       if (self.native) {
         self.beginAfterSeek = begin;
         var target = self.seekTarget !== null ? self.seekTarget : Math.max(0,Math.round(Number(position) || 0));
@@ -163,11 +163,12 @@
   };
   Player.prototype.selectEmbeddedTrack = function (index, remember) { var track = this.audioTracks.find(function (record) { return record.index === Number(index); }); if (!track) return; try { if (this.native) this.av.setSelectTrack('AUDIO',Number(index)); else if (this.video.audioTracks) { for (var i = 0; i < this.video.audioTracks.length; i++) this.video.audioTracks[i].enabled = i === Number(index); } this.audioSelection = 'track:' + index; $('audio-select').value = this.audioSelection; this.options.audioLanguage = track.code; if (remember !== false && this.callbacks.onAudioPreference) this.callbacks.onAudioPreference({kind:'track',subjectId:String(this.subject.subjectId),code:track.code,label:track.label}); } catch (_) { $('audio-select').value = this.audioSelection; this.error('The TV could not select that embedded audio track.'); } };
   Player.prototype.selectAudio = function (value) {
+    var player = this; if (this.deferUntilSeek('audio',function () { player.selectAudio(value); })) return;
     var self = this; if (value.indexOf('track:') === 0) { this.selectEmbeddedTrack(Number(value.slice(6))); return; }
     var id = value.slice(8), variant = audioVariants(this.baseSubject).find(function (item) { return String(item.subjectId) === id; });
     if (id === String(this.subject.subjectId)) { this.audioSelection = value; return; }
     if (!variant) { $('audio-select').value = this.audioSelection; return; }
-    var request = ++this.audioEpoch, playbackEpoch = this.epoch, subject = audioSubject(this.baseSubject,variant); this.pendingAudioRestart = null; $('restart-audio').hidden = true; $('audio-select').disabled = true; $('stream-status').textContent = 'Preparing ' + languageLabel(variant) + ' audio…';
+    var request = ++this.audioEpoch, playbackEpoch = this.epoch, subject = audioSubject(this.baseSubject,variant); this.pendingAudioRestart = null; $('restart-audio').hidden = true; $('audio-select').disabled = true; $('stream-status').textContent = 'Preparing ' + languageLabel(variant) + ' audioâ€¦';
     return this.api.playback(subject,Number(this.options.season || 0),Number(this.options.episode || 0)).then(function (streams) {
       if (!self.active || request !== self.audioEpoch || playbackEpoch !== self.epoch) return;
       try { streams = matchingRuntime(streams,Number(self.stream.duration) || self.duration / 1000); }
@@ -190,13 +191,15 @@
     if (this.callbacks.onAudioPreference) this.callbacks.onAudioPreference({kind:'edition',subjectId:String(pending.subject.subjectId),code:pending.subject._audio_code,label:pending.subject._audio_language});
   };
   Player.prototype.previewPosition = function () { return this.seekTarget !== null ? this.seekTarget : this.seekInFlight ? this.seekInFlight.target : this.position; };
+  Player.prototype.deferUntilSeek = function (name,action) { if (!this.native || !this.seekInFlight) return false; this.pendingSeekActions = this.pendingSeekActions || {}; this.pendingSeekActions[name] = action; return true; };
+  Player.prototype.flushSeekActions = function () { if (this.seekInFlight || this.preparing || !this.active) return; var pending = this.pendingSeekActions || {}, names = Object.keys(pending); for (var i=0;i<names.length;i++) { var action=pending[names[i]]; delete pending[names[i]]; action(); if (this.seekInFlight || this.preparing || !this.active) break; } };
   Player.prototype.updateTimeDisplay = function () { var seek = $('seek-bar'), maximum = Math.max(1000,Math.round(this.duration || 1000)), value = this.previewPosition(), text = clock(value) + ' / ' + clock(this.duration); if (Number(seek.max) !== maximum) seek.max = maximum; if (!this.scrubbing && Number(seek.value) !== value) seek.value = value; if ($('player-clock').textContent !== text) $('player-clock').textContent = text; };
   Player.prototype.tick = function (position) { this.position = Math.max(0,Math.round(Number(position) || 0)); if (!this.native && Number.isFinite(this.video.duration)) this.duration = Math.round(this.video.duration * 1000); this.updateTimeDisplay(); this.renderCaption(); if (this.callbacks.onTick) this.callbacks.onTick(this.position,this.duration); if (this.seekTarget !== null && !this.seekInFlight && this.seekDiagnostics.state === 'waiting-state') this.flushSeek(); };
   Player.prototype.renderCaption = function () { var at = this.position - this.captionDelay, low = 0, high = this.cues.length - 1, found = -1; while (low <= high) { var middle = (low + high) >> 1; if (this.cues[middle].start <= at) { found = middle; low = middle + 1; } else high = middle - 1; } var cue = this.cues[found], text = cue && cue.end > at ? cue.text : '', overlay = $('subtitle-overlay'); if (overlay.textContent !== text) overlay.textContent = text; };
   Player.prototype.toggle = function () { if (!this.active) return; if (this.paused) this.play(); else this.pause(); this.reveal(); };
-  Player.prototype.play = function () { try { if (this.native) this.av.play(); else { var p = this.video.play(); if (p) p.catch(this.error.bind(this, 'Press OK on Play to begin.')); } this.paused = false; this.updatePlayButton(); } catch (e) { this.error(e.message); } };
-  Player.prototype.pause = function () { try { if (this.native && this.av.getState() === 'PLAYING') this.av.pause(); else if (!this.native) this.video.pause(); this.paused = true; this.updatePlayButton(); } catch (_) {} };
-  Player.prototype.recordNativeError = function (error,operation) { var name = error && (error.name || error.code || error.message) || String(error || 'UNKNOWN_ERROR'); var state = 'UNKNOWN'; try { state = this.native ? this.av.getState() : String(this.video.readyState); } catch (_) {} this.lastNativeError = {operation:operation,name:String(name),code:error && error.code !== undefined ? error.code : null,message:error && error.message || '',state:state,epoch:this.epoch,at:Date.now()}; this.seekDiagnostics.lastError = this.lastNativeError; return this.lastNativeError; };
+  Player.prototype.play = function () { try { if (this.native && this.seekInFlight) this.seekInFlight.pendingPause = false; else if (this.native) this.av.play(); else { var p = this.video.play(); if (p) p.catch(this.error.bind(this, 'Press OK on Play to begin.')); } this.paused = false; this.updatePlayButton(); } catch (e) { this.error(e.message); } };
+  Player.prototype.pause = function () { try { if (this.native && this.seekInFlight) this.seekInFlight.pendingPause = true; else if (this.native && this.av.getState() === 'PLAYING') this.av.pause(); else if (!this.native) this.video.pause(); this.paused = true; this.updatePlayButton(); } catch (_) {} };
+  Player.prototype.recordNativeError = function (error,operation) { var name = error && (error.name || error.code || error.message) || String(error || 'UNKNOWN_ERROR'); var state = 'UNKNOWN'; try { state = this.native ? (this.seekInFlight ? this.seekInFlight.state : this.av.getState()) : String(this.video.readyState); } catch (_) {} this.lastNativeError = {operation:operation,name:String(name),code:error && error.code !== undefined ? error.code : null,message:error && error.message || '',state:state,epoch:this.epoch,at:Date.now()}; this.seekDiagnostics.lastError = this.lastNativeError; return this.lastNativeError; };
   Player.prototype.resetSeek = function () { clearTimeout(this.seekTimer); this.loading(false); this.scrubbing = false; if (this.seekInFlight) clearTimeout(this.seekInFlight.timeout); this.seekTimer = null; this.seekTarget = null; this.seekInFlight = null; this.beginAfterSeek = null; if (this.seekDiagnostics) { this.seekDiagnostics.state = 'idle'; this.seekDiagnostics.target = null; } };
   Player.prototype.skip = function (milliseconds) { this.seek(this.previewPosition() + milliseconds); };
   Player.prototype.seek = function (position, immediate) {
@@ -206,7 +209,7 @@
     if (this.seekTarget !== null || this.seekInFlight) this.seekDiagnostics.coalesced++;
     this.seekTarget = position; this.seekDiagnostics.requested++; this.seekDiagnostics.target = position; this.seekDiagnostics.state = this.preparing ? 'waiting-prepare' : this.seekInFlight ? 'queued' : 'debouncing';
     this.seekGraceUntil = Date.now() + 8000; this.bufferEvents = [];
-    this.reveal(); this.updateTimeDisplay(); $('stream-status').textContent = 'Seeking to ' + clock(position) + '…';
+    this.reveal(); this.updateTimeDisplay(); $('stream-status').textContent = 'Seeking to ' + clock(position) + 'â€¦';
     clearTimeout(this.seekTimer); this.seekTimer = null; var self = this;
     if (immediate) this.flushSeek(); else this.seekTimer = setTimeout(function () { self.seekTimer = null; self.flushSeek(); },150);
   };
@@ -220,7 +223,24 @@
     if (['READY','PLAYING','PAUSED'].indexOf(state) < 0) { this.seekDiagnostics.state = 'waiting-state'; return; }
     var flight = {id:++this.seekSerial,epoch:this.epoch,target:this.seekTarget,state:state,paused:this.paused,started:Date.now(),timeout:null};
     this.seekTarget = null; this.seekInFlight = flight; this.seekDiagnostics.issued++; this.seekDiagnostics.state = 'in-flight'; this.seekDiagnostics.target = flight.target;
-    flight.timeout = setTimeout(function () { if (self.seekInFlight !== flight || flight.epoch !== self.epoch) return; self.seekDiagnostics.state = 'timeout'; self.recordNativeError({name:'SEEK_TIMEOUT',message:'Native seek callback did not arrive within 10 seconds.'},'seek'); self.error('The TV did not confirm seeking (SEEK_TIMEOUT). Try reopening this video.'); },10000);
+    flight.timeout = setTimeout(function () {
+      if (self.seekInFlight !== flight || flight.epoch !== self.epoch || !self.active) return;
+      var target = self.seekTarget !== null ? self.seekTarget : flight.target;
+      self.seekInFlight = null; self.seekTarget = null; clearTimeout(self.seekTimer); self.seekTimer = null;
+      self.seekDiagnostics.state = 'timeout';
+      self.lastNativeError = {operation:'seek',name:'SEEK_TIMEOUT',message:'Native seek callback did not arrive within 10 seconds.',state:flight.state,epoch:flight.epoch,at:Date.now()};
+      self.seekDiagnostics.lastError = self.lastNativeError;
+      // Cancel the stalled native session rather than leaving every later seek queued forever.
+      // One automatic reopen per open() prevents an unavailable source from looping.
+      if (self.native && !self.seekRecoveryUsed) {
+        self.seekRecoveryUsed = true; self.start(self.stream,target,self.paused);
+        $('stream-status').textContent = 'Recovering stalled playback at your selected position';
+      } else {
+        self.beginAfterSeek = null;
+        if (self.callbacks.onBack) self.callbacks.onBack(); else self.stop();
+        self.error('The video did not respond after one recovery attempt. Your place is saved; try another available source.');
+      }
+    },10000);
     try { if (this.native) this.av.seekTo(flight.target,function () { self.finishSeek(flight,null); },function (error) { self.finishSeek(flight,error || {name:'UNKNOWN_SEEK_ERROR'}); }); else this.video.currentTime = flight.target / 1000; }
     catch (error) { this.finishSeek(flight,error); }
   };
@@ -233,20 +253,23 @@
     else {
       var confirmed = flight.target; try { if (this.native && this.av.getCurrentTime) { var actual = Number(this.av.getCurrentTime()); if (Number.isFinite(actual) && actual >= 0 && (!(this.duration > 0) || actual <= this.duration)) confirmed = Math.round(actual); } } catch (_) {}
       this.tick(confirmed); this.seekDiagnostics.completed++; this.seekDiagnostics.lastConfirmed = confirmed; this.seekDiagnostics.state = 'completed';
-      try { if (this.native && this.paused && this.av.getState() === 'PLAYING') this.av.pause(); } catch (pauseError) { this.recordNativeError(pauseError,'pause-after-seek'); }
       if (this.callbacks.onProgress) this.callbacks.onProgress(this.position,this.duration);
     }
+    try { if (this.native && !this.beginAfterSeek && flight.pendingPause !== undefined) { if (this.paused) this.av.pause(); else this.av.play(); } else if (this.native && this.paused && this.av.getState() === 'PLAYING') this.av.pause(); } catch (pauseError) { this.recordNativeError(pauseError,'pause-after-seek'); }
     if (this.seekTarget !== null) { if (!this.seekTimer) this.flushSeek(); return; }
     this.seekDiagnostics.target = null;
     if (!error) $('stream-status').textContent = '';
     if (this.beginAfterSeek) { var begin = this.beginAfterSeek; this.beginAfterSeek = null; begin(); }
+    this.flushSeekActions();
   };
-  Player.prototype.selectQuality = function (value) { var previous = this.preference; this.preference = value; var target = chooseQuality(this.streams,value,navigator.connection && navigator.connection.downlink); if (target && target.url !== this.stream.url) { try { matchingRuntime([target],Number(this.stream.duration) || this.duration / 1000); } catch (_) { this.preference = previous; $('quality-select').value = previous; this.error('That quality contains a different cut. Keep this quality to preserve your place.'); return; } var language = $('subtitle-select').value; this.start(target,this.previewPosition(),this.paused); this.loadCaptions(target,language !== 'off',language === 'off' ? this.options.language || 'en' : language); } };
+  Player.prototype.selectQuality = function (value) { var self=this;if(this.deferUntilSeek('quality',function(){self.selectQuality(value);}))return; var previous = this.preference; this.preference = value; var target = chooseQuality(this.streams,value,navigator.connection && navigator.connection.downlink); if (target && target.url !== this.stream.url) { try { matchingRuntime([target],Number(this.stream.duration) || this.duration / 1000); } catch (_) { this.preference = previous; $('quality-select').value = previous; this.error('That quality contains a different cut. Keep this quality to preserve your place.'); return; } var language = $('subtitle-select').value; this.start(target,this.previewPosition(),this.paused); this.loadCaptions(target,language !== 'off',language === 'off' ? this.options.language || 'en' : language); } };
   Player.prototype.buffering = function () {
     if (!this.active) return;
     this.bufferingIndicator();
     var reason = this.preparing ? 'preparing' : this.seekInFlight || this.seekTarget !== null ? 'seeking' : Date.now() < this.seekGraceUntil ? 'seek-grace' : 'network', nativeState = '';
-    try { nativeState = this.native ? this.av.getState() : ''; } catch (_) {}
+    // Samsung forbids another AVPlay operation until seekTo's callback arrives.
+    // Buffering-start is emitted inside that operation; use its captured state.
+    try { nativeState = this.native ? (this.seekInFlight ? this.seekInFlight.state : this.av.getState()) : ''; } catch (_) {}
     this.lastBufferEvent = {at:Date.now(),reason:reason,state:nativeState,quality:this.stream && this.stream.resolutions};
     if (reason !== 'network' || (this.native && nativeState !== 'PLAYING') || this.paused || this.preference !== 'auto' || Date.now() - this.lastQualityChange < 15000) return;
     this.bufferEvents = this.bufferEvents.filter(function (time) { return Date.now() - time < 45000; }); this.bufferEvents.push(Date.now());
@@ -273,7 +296,7 @@
     return this.cache.get(key).then(function (cached) { if (epoch !== self.captionEpoch) return; if (cached) return cached; var caption = (self.captions || []).find(function (c) { return String(c.lan || c.id) === String(language); }); if (!caption || !caption.url) { return self.api.captions(self.subject,self.stream.id).then(function (data) { self.captions = data.captions || []; caption = self.captions.find(function (c) { return String(c.lan || c.id) === String(language); }); return download(caption); }); } return download(caption); }).then(function (record) { if (!record || epoch !== self.captionEpoch) return; self.cues = record.cues; self.renderCaption(); $('stream-status').textContent = record.caption.lanName + ' subtitles ready'; }).catch(function () { if (epoch === self.captionEpoch) $('stream-status').textContent = 'Could not load this subtitle language'; });
     function download(caption) { if (!caption || !caption.url) throw new Error('No subtitle URL'); return self.api.text(caption.url,caption.headers).then(function (text) { var cues = parseSubtitles(text); if (!cues.length) throw new Error('No readable subtitle cues'); var descriptor = {lan:caption.lan,lanName:caption.lanName || caption.lan}; var record = {key:key,language:language,caption:descriptor,captions:(self.captions || []).map(function (c) { return {lan:c.lan,lanName:c.lanName,id:c.id}; }),cues:cues,saved:Date.now()}; self.cache.put(record); return record; }); }
   };
-  Player.prototype.stop = function () { if (this.active && this.callbacks.onProgress) this.callbacks.onProgress(this.position,this.duration); this.active = false; this.epoch++; this.resetSeek(); this.preparing = false; this.captionEpoch++; clearTimeout(this.hideTimer); this.cues = []; $('subtitle-overlay').textContent = ''; try { if (this.native && this.av.getState() !== 'NONE') this.av.close(); else { this.video.pause(); this.video.removeAttribute('src'); this.video.load(); } } catch (_) {} this.page.hidden = true; if (document.fullscreenElement && document.exitFullscreen) document.exitFullscreen().catch(function () {}); };
+  Player.prototype.stop = function () { if (this.active && this.callbacks.onProgress) this.callbacks.onProgress(this.position,this.duration); this.active = false; this.pendingSeekActions = {}; this.epoch++; this.resetSeek(); this.preparing = false; this.captionEpoch++; clearTimeout(this.hideTimer); this.cues = []; $('subtitle-overlay').textContent = ''; try { if (this.native && this.av.getState() !== 'NONE') this.av.close(); else { this.video.pause(); this.video.removeAttribute('src'); this.video.load(); } } catch (_) {} this.page.hidden = true; if (document.fullscreenElement && document.exitFullscreen) document.exitFullscreen().catch(function () {}); };
   Player.prototype.notifyEnded = function () { if (!this.active || this.endNotified) return; this.endNotified = true; this.completed = true; if (this.callbacks.onEnd) this.callbacks.onEnd(); };
   Player.prototype.handleKey = function (key,event) { if (!this.active) return false; if (key === 'Back' || key === 'Escape' || (key === 'Backspace' && document.activeElement.tagName !== 'INPUT')) { if (this.callbacks.onBack) this.callbacks.onBack(); return true; } if (key === 'MediaPlayPause' || key === ' ') { this.toggle(); return true; } if (key === 'MediaPlay') { this.play(); return true; } if (key === 'MediaPause') { this.pause(); return true; } if (key === 'MediaStop') { if (this.callbacks.onBack) this.callbacks.onBack(); return true; } if (key === 'MediaRewind' || key === 'MediaFastForward') { this.skip(key === 'MediaRewind' ? -10000 : 10000); return true; } var hidden = this.page.classList.contains('controls-hidden'); if ((key === 'ArrowLeft' || key === 'ArrowRight') && (hidden || document.activeElement === $('seek-bar') || document.activeElement === this.page)) { this.skip(key === 'ArrowLeft' ? -10000 : 10000); $('seek-bar').focus(); return true; } if (key === 'Enter' && document.activeElement === $('seek-bar')) { this.flushSeek(); return true; } if (key === 'Enter' && (hidden || document.activeElement === this.page || document.activeElement === $('play-pause') || document.activeElement === this.video || document.activeElement === $('av-player'))) { if (event && event.repeat) return true; this.toggle(); $('play-pause').focus(); return true; } if (/^Arrow/.test(key) || key === 'Tab' || key === 'Enter') { this.reveal(); if (hidden) { $('play-pause').focus(); return true; } } return false; };
   global.MovieBoxPlayer = Player; global.MovieBoxSubtitles = {parse:parseSubtitles,Cache:SubtitleCache}; global.MovieBoxChooseQuality = chooseQuality;

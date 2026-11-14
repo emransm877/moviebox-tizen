@@ -2,7 +2,7 @@ param(
     [string]$TvAddress = '',
     [string]$Profile = '',
     [string]$SdkRoot = '',
-    [string]$WidgetPath = (Join-Path $PSScriptRoot 'MovieBox-TV-0.8.3-unsigned.wgt')
+    [string]$WidgetPath = (Join-Path $PSScriptRoot 'MovieBox-TV-0.8.4-unsigned.wgt')
 )
 $ErrorActionPreference = 'Stop'
 if (-not $TvAddress) { $TvAddress = Read-Host 'TV local IPv4 address (Developer Mode must be enabled)' }
@@ -21,8 +21,8 @@ $sdb = Join-Path $SdkRoot 'tools\sdb.exe'
 $tizen = Join-Path $SdkRoot 'tools\ide\bin\tizen.bat'
 if (-not (Test-Path -LiteralPath $sdb) -or -not (Test-Path -LiteralPath $tizen)) { throw 'SDK tools are missing. Check -SdkRoot.' }
 if (-not (Test-Path -LiteralPath $WidgetPath)) { throw 'Place the unsigned MovieBox WGT beside this script, or pass -WidgetPath.' }
-$expectedHash = '736f8e4b6bc57be6d2dfb155101bdc838a8ae280f6c6682b7d59010f7e1428eb'
-if ((Get-FileHash -LiteralPath $WidgetPath -Algorithm SHA256).Hash.ToLowerInvariant() -ne $expectedHash) { throw 'The widget does not match the reviewed 0.8.3 release. Download it again.' }
+$expectedHash = '22e9dd63c43ad91a3ff5c96f83a1c8e5fdefaca65eeceb3a0c5210fbffa942bd'
+if ((Get-FileHash -LiteralPath $WidgetPath -Algorithm SHA256).Hash.ToLowerInvariant() -ne $expectedHash) { throw 'The widget does not match the reviewed 0.8.4 release. Download it again.' }
 $tempBase = [IO.Path]::GetFullPath([IO.Path]::GetTempPath()).TrimEnd('\') + '\'
 $workDirectory = Join-Path $tempBase ('MovieBoxTV-' + [Guid]::NewGuid().ToString('N'))
 $appDirectory = Join-Path $workDirectory 'app'

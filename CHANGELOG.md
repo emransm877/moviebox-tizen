@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.8.4 - 2026-11-15
+
+- Wait for an outstanding Samsung seek callback before pause/resume, audio, quality and sizing operations. Do not poll native state from buffering callbacks while seeking.
+- Recover a missing native seek callback once by reopening at the latest requested position, preserving paused state and subtitle selection. If recovery also stalls, return to details with progress saved. Ignore stale callbacks from the canceled session.
+- Add controlled native failure, command-barrier and bounded-timeout regression tests. A real TV seek failure was captured; the original whole-interface freeze has not yet been reproduced.
+
 ## 0.8.3 — 2026-11-14
 
 - Put the six catalogue fields in one content-sized row with readable selected text.
