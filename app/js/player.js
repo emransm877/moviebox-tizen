@@ -56,15 +56,16 @@
     this.seekDiagnostics = {requested:0,issued:0,completed:0,coalesced:0,state:'idle',target:null,lastConfirmed:0,lastState:'NONE',lastError:null,epoch:0};
     document.body.classList.toggle('native-avplay', this.native);
     $('player-engine').textContent = this.native ? 'SAMSUNG NATIVE PLAYER' : 'BROWSER PREVIEW';
-    var self = this;
-    this.video.addEventListener('timeupdate', function () { if (!self.native) self.tick(self.video.currentTime * 1000); });
-    this.video.addEventListener('loadedmetadata', function () { self.duration = self.video.duration * 1000; if (self.pendingResume) { self.video.currentTime = Math.min(self.pendingResume, Math.max(0, self.duration - 1000)) / 1000; self.pendingResume = 0; } });
-    this.video.addEventListener('seeked', function () { if (!self.native && self.seekInFlight) self.finishSeek(self.seekInFlight,null); });
-    this.video.addEventListener('playing', function () { self.loading(false); self.paused = false; self.updatePlayButton(); if (self.callbacks.onStarted) self.callbacks.onStarted(); });
-    this.video.addEventListener('pause', function () { if (!self.native) { self.paused = true; self.updatePlayButton(); } });
-    this.video.addEventListener('waiting', function () { if (!self.native && self.active) self.buffering(); });
-    this.video.addEventListener('ended', function () { if (!self.native) self.notifyEnded(); });
-    this.video.addEventListener('error', function () { if (self.active && !self.native) self.error('The browser cannot decode this source. The TV uses its own native player.'); });
+    var self = this; this.videoListeners = [];
+    function bindVideo(name,callback){self.videoListeners.push([name,callback]);self.video.addEventListener(name,callback);}
+    bindVideo('timeupdate', function () { if (!self.native) self.tick(self.video.currentTime * 1000); });
+    bindVideo('loadedmetadata', function () { if (self.native) return; self.duration = self.video.duration * 1000; if (self.htmlPrepared) self.htmlPrepared(); else if (self.pendingResume) { self.video.currentTime = Math.min(self.pendingResume, Math.max(0, self.duration - 1000)) / 1000; self.pendingResume = 0; } });
+    bindVideo('seeked', function () { if (!self.native && self.seekInFlight) self.finishSeek(self.seekInFlight,null); });
+    bindVideo('playing', function () { if (self.native) return; self.loading(false); self.paused = false; self.updatePlayButton(); if (self.callbacks.onStarted) self.callbacks.onStarted(); });
+    bindVideo('pause', function () { if (!self.native && !self.preparing && !self.seekInFlight && self.seekTarget===null && Date.now()>(self.htmlSeekGrace||0) && self.active) { self.paused = true; self.updatePlayButton(); } });
+    bindVideo('waiting', function () { if (!self.native && self.active) self.buffering(); });
+    bindVideo('ended', function () { if (!self.native) self.notifyEnded(); });
+    bindVideo('error', function () { if (self.active && !self.native) self.error('The browser cannot decode this source. The TV uses its own native player.'); });
     $('play-pause').onclick = function () { self.toggle(); };
     $('seek-back').onclick = function () { self.skip(-10000); };
     $('seek-forward').onclick = function () { self.skip(10000); };
@@ -143,8 +144,23 @@
         this.av.prepareAsync(prepared, function (error) { if (epoch === self.epoch) { self.preparing = false; self.recordNativeError(error,'prepare'); self.error('The TV could not prepare this video (' + self.lastNativeError.name + ').'); } });
       } catch (error) { this.preparing = false; this.recordNativeError(error,'open'); this.error('Native playback failed: ' + self.lastNativeError.name); }
     } else {
-      this.video.pause(); this.pendingResume = position; this.video.src = stream.url; this.video.load();
-      var result = this.video.play(); if (result) result.then(function () { if (paused) self.video.pause(); }).catch(function () { self.loading(false); self.paused = true; self.updatePlayButton(); self.reveal(); });
+      this.video.pause(); this.pendingResume = 0;
+      this.htmlPrepared = function () {
+        if (epoch !== self.epoch || !self.active) return;
+        self.htmlPrepared = null; self.preparing = false;
+        self.duration = Math.round(self.video.duration * 1000);
+        function beginHTML() {
+          if (epoch !== self.epoch || !self.active) return;
+          self.populateAudioTracks(true); self.loading(false);
+          if (self.paused) { self.video.pause(); self.updatePlayButton(); if (self.callbacks.onStarted) self.callbacks.onStarted(); }
+          else { var result = self.video.play(); if (result) result.catch(function () { if (epoch === self.epoch) { self.paused = true; self.updatePlayButton(); self.reveal(); } }); }
+          self.flushSeekActions();
+        }
+        var target = self.seekTarget !== null ? self.seekTarget : Math.max(0,Math.round(Number(position) || 0));
+        if (target > 0) { self.beginAfterSeek = beginHTML; self.seek(target,true); }
+        else beginHTML();
+      };
+      this.video.src = stream.url; this.video.load();
     }
   };
   Player.prototype.populateQualities = function () { var select = $('quality-select'); select.textContent = ''; select.add(new Option('Auto','auto')); this.streams.forEach(function (stream) { select.add(new Option(stream.resolutions + 'p',String(stream.resolutions))); }); var selected = chooseQuality(this.streams,this.preference,navigator.connection && navigator.connection.downlink); select.value = this.preference === 'auto' ? 'auto' : String(selected && selected.resolutions); };
@@ -230,6 +246,7 @@
       self.seekDiagnostics.state = 'timeout';
       self.lastNativeError = {operation:'seek',name:'SEEK_TIMEOUT',message:'Native seek callback did not arrive within 10 seconds.',state:flight.state,epoch:flight.epoch,at:Date.now()};
       self.seekDiagnostics.lastError = self.lastNativeError;
+      if (self.recoverTransport) { self.recoverTransport('seek-timeout',target); return; }
       // Cancel the stalled native session rather than leaving every later seek queued forever.
       // One automatic reopen per open() prevents an unavailable source from looping.
       if (self.native && !self.seekRecoveryUsed) {
@@ -249,10 +266,15 @@
     clearTimeout(flight.timeout); this.seekInFlight = null;
     this.seekDiagnostics.lastDurationMs = Date.now() - flight.started;
     this.seekGraceUntil = Date.now() + 8000; this.bufferEvents = [];
-    if (error) { this.recordNativeError(error,'seek'); this.seekDiagnostics.state = 'failed'; this.updateTimeDisplay(); this.error('The TV could not seek (' + this.lastNativeError.name + ').'); }
+    if (error) { this.recordNativeError(error,'seek'); this.seekDiagnostics.state = 'failed'; this.updateTimeDisplay(); this.error('The TV could not seek (' + this.lastNativeError.name + ').'); if(this.transportRecovering||this.transportFailed)return; }
     else {
       var confirmed = flight.target; try { if (this.native && this.av.getCurrentTime) { var actual = Number(this.av.getCurrentTime()); if (Number.isFinite(actual) && actual >= 0 && (!(this.duration > 0) || actual <= this.duration)) confirmed = Math.round(actual); } } catch (_) {}
       this.tick(confirmed); this.seekDiagnostics.completed++; this.seekDiagnostics.lastConfirmed = confirmed; this.seekDiagnostics.state = 'completed';
+      if(!this.native&&!this.beginAfterSeek){
+        this.htmlSeekGrace=Date.now()+1200;
+        if(this.paused)this.video.pause();
+        else{var owner=this,resumed=this.video.play();if(resumed)resumed.catch(function(){if(owner.active&&flight.epoch===owner.epoch){owner.paused=true;owner.updatePlayButton();owner.reveal();}});}
+      }
       if (this.callbacks.onProgress) this.callbacks.onProgress(this.position,this.duration);
     }
     try { if (this.native && !this.beginAfterSeek && flight.pendingPause !== undefined) { if (this.paused) this.av.pause(); else this.av.play(); } else if (this.native && this.paused && this.av.getState() === 'PLAYING') this.av.pause(); } catch (pauseError) { this.recordNativeError(pauseError,'pause-after-seek'); }

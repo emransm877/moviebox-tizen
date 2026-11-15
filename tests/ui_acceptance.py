@@ -60,7 +60,7 @@ def run():
             page.on('pageerror',lambda error: errors.append(str(error)))
             def github_release(route):
                 github_requests.append(route.request.url)
-                route.fulfill(status=200,content_type='application/json',headers={'Access-Control-Allow-Origin':'*'},body=json.dumps({'tag_name':'v0.9.0','html_url':'https://github.com/emransm877/moviebox-tizen/releases/tag/v0.9.0'}))
+                route.fulfill(status=200,content_type='application/json',headers={'Access-Control-Allow-Origin':'*'},body=json.dumps({'tag_name':'v0.10.0','html_url':'https://github.com/emransm877/moviebox-tizen/releases/tag/v0.10.0'}))
             page.route('https://api.github.com/repos/emransm877/moviebox-tizen/releases/latest',github_release)
             page.route('**/js/api.js',lambda route: route.fulfill(status=200,content_type='text/javascript',body=STUB))
             page.route('**/$WEBAPIS/**',lambda route: route.fulfill(status=200,content_type='text/javascript',body=''))
@@ -213,12 +213,12 @@ def run():
             page.keyboard.press('Enter')
             page.locator('#update-notice').wait_for()
             assert page.evaluate('document.activeElement.id')=='check-updates'
-            assert page.locator('#update-title').inner_text()=='MovieBox 0.9.0 is available'
+            assert page.locator('#update-title').inner_text()=='MovieBox 0.10.0 is available'
             original_url=page.url
             page.locator('#update-download').focus()
             page.keyboard.press('Enter')
             assert page.locator('#update-instructions').is_visible()
-            assert page.locator('#update-url').inner_text()=='https://github.com/emransm877/moviebox-tizen/releases/tag/v0.9.0'
+            assert page.locator('#update-url').inner_text()=='https://github.com/emransm877/moviebox-tizen/releases/tag/v0.10.0'
             assert page.url==original_url
             checks['optional_update_notice_does_not_take_focus_or_auto_navigate']=True
             page.locator('#update-later').focus()
@@ -228,7 +228,7 @@ def run():
             page.locator('#check-updates').click()
             page.locator('#update-notice').wait_for()
             page.locator('#update-skip').click()
-            assert page.evaluate('MovieBoxTV.releases.preferences.skipped')=='v0.9.0'
+            assert page.evaluate('MovieBoxTV.releases.preferences.skipped')=='v0.10.0'
             checks['update_later_and_skip_are_user_controlled']=True
             page.locator('#optional-updates').focus()
             page.keyboard.press('Enter')

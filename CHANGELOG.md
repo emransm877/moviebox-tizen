@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.9.2 - 2026-11-15
+
+- Configure the application User-Agent before media initialization and create the video element only after configuration completes. Treat network pipeline errors as transport failures, rather than unsupported codecs.
+- Guard premature end events so a disconnected stream is not marked completed or auto-advanced.
+- Use the TV HTML video transport for MP4 in Auto mode, after configuring this application's media User-Agent with Samsung WebSetting. The native AVPlay engine remains selectable for alternate formats and embedded tracks.
+- Wait for metadata and a confirmed resume seek before starting HTML playback. Preserve pause intent, audio/subtitles, quality, remote controls and per-episode resume.
+- Refresh source metadata on connection failure instead of endlessly reusing a failed URL. Bound recovery attempts, cancel stale callbacks and keep Retry/Back navigation available without exiting the app.
+- Persist a compact playback failure journal without media URLs, request headers or account credentials. Keep hardware TV volume control in both engines.
+- Add real HTML video and controlled network-failure regression tests. Actual TV transport comparison and desktop verification are documented separately.
+
 ## 0.8.4 - 2026-11-15
 
 - Wait for an outstanding Samsung seek callback before pause/resume, audio, quality and sizing operations. Do not poll native state from buffering callbacks while seeking.

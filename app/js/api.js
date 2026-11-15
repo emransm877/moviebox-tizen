@@ -13,7 +13,7 @@
     constructor() {
       this.webToken = ''; this.nativeToken = ''; this.warming = null; this.captionCache = new Map(); this.resourceContext = new Map(); this.captionTimes = new Map();
       this.preview = !root.tizen && /^https?:$/.test(location.protocol);
-      this.streamUserAgent = 'com.community.oneroom/50020104 (Linux; U; Android 17; en_US; TizenTV; Build/LOCAL; Cronet/135.0.7012.3) MovieBoxTV/0.1';
+      this.streamUserAgent = root.MovieBoxMediaUserAgent || 'com.community.oneroom/50020104 (Linux; U; Android 17; en_US; TizenTV; Build/LOCAL; Cronet/135.0.7012.3) MovieBoxTV/0.1';
       this.client = {package_name:'com.community.oneroom',version_name:'4.0.03.0930.03',version_code:50020104,
         os:'android',os_version:'17',device_id:randomId(),gaid:randomId().slice(0,16),install_ch:'google-play',install_store:'gp',
         brand:'Samsung',model:'TizenTV',system_language:'en',net:'NETWORK_WIFI',region:'US',timezone:Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC',

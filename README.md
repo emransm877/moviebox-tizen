@@ -1,17 +1,18 @@
 # MovieBox TV App
 
 A small, independent Samsung Tizen client, installed on the TV as **MovieBox**.
-The interface is designed for a television and the Samsung remote, with native
-AVPlay decoding rather than a desktop application running on the TV.
+The interface is designed for the Samsung remote and runs independently on the TV.
+Auto uses the TV's HTML video engine for MP4 with app-scoped media request headers;
+Samsung AVPlay remains selectable for alternate formats and embedded audio tracks.
 
-**Preview 0.8.4:** native seek lifecycle fix; 116 browser checks pass. Installed on Samsung UA43U8000FRSER / Tizen 9.0 and resumed the existing episode with the saved library preserved. A native seek error was captured before this fix; the original whole-interface freeze remains unconfirmed.
-Native 1080p playback, subtitle loading, and forward/back seeking were verified;
-the user confirmed seeking with the Samsung remote. Requires Tizen 7.0+; other
-models remain unverified. See [hardware validation](docs/hardware-validation.md).
+**Preview 0.9.2:** 129 browser checks pass, including real HTML video resume/seeking
+and controlled network recovery. The exact failing episode was tested at 1080p
+on Samsung U8000F / Tizen 9 using the corrected TV transport. Requires Tizen 7+;
+other models and sources remain unverified. See [hardware validation](docs/hardware-validation.md).
 
 ## Download and install
 
-[**Download TV install bundle**](https://github.com/emransm877/moviebox-tizen/releases/latest/download/MovieBox-TV-0.8.4-install-bundle.zip)
+[**Download TV install bundle**](https://github.com/emransm877/moviebox-tizen/releases/latest/download/MovieBox-TV-0.9.2-install-bundle.zip)
 
 This is a developer-install bundle: an unsigned WGT plus a Windows helper that
 signs and installs using your own Samsung TV certificate profile. Extract it,
@@ -54,7 +55,7 @@ Python 3.11+ can create the unsigned development widget without an npm toolchain
 python tools/package.py
 ```
 
-The output is `dist/MovieBox-TV-0.8.4-unsigned.wgt` with a SHA-256 file. It is an
+The output is `dist/MovieBox-TV-0.9.2-unsigned.wgt` with a SHA-256 file. It is an
 unsigned build artifact, **not an installable signed release**. The package
 contains only the app's HTML/CSS/JavaScript and icons; it does not contain Python,
 an emulator, a browser engine, or the Android APK.

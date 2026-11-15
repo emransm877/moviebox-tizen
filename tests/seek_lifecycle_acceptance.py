@@ -61,18 +61,23 @@ try:
   page.evaluate('''()=>{MovieBoxTV.player.pause();window.realSetTimeout=window.setTimeout;window.setTimeout=function(fn,ms){if(ms===10000){window.seekDeadline=fn;return realSetTimeout(function(){},60000);}return realSetTimeout(fn,ms);};MovieBoxTV.player.seek(50000,true);MovieBoxTV.player.seek(60000);window.oldFlight=flight;window.busy=false;webapis.avplay.seekTo=realSeek;seekDeadline();}''')
   page.wait_for_function('nativeState==="PAUSED" && !MovieBoxTV.player.seekInFlight')
   assert page.evaluate('MovieBoxTV.player.position') >= 60000
-  assert page.evaluate('MovieBoxTV.player.seekRecoveryUsed')
+  assert page.evaluate('MovieBoxTV.player.transportRecoveryCount') == 1
   assert page.evaluate('MovieBoxTV.player.paused && nativeAudioIndex===1')
   assert page.evaluate('document.getElementById("subtitle-select").value') == 'en'
-  checks['missing_callback_reopens_once_at_latest_target_with_subtitle_preference'] = True
+  checks['missing_callback_refreshes_source_at_latest_target_with_subtitle_preference'] = True
   epoch = page.evaluate('MovieBoxTV.player.epoch')
   page.evaluate('oldFlight.ok()')
   assert page.evaluate('MovieBoxTV.player.epoch') == epoch
   checks['late_callback_from_cancelled_session_is_ignored'] = True
-  page.evaluate('''()=>{webapis.avplay.seekTo=function(){};MovieBoxTV.player.seek(70000,true);seekDeadline();}''')
-  page.wait_for_function('!MovieBoxTV.player.active && !document.getElementById("detail-page").hidden')
+  page.evaluate('''()=>{webapis.avplay.seekTo=function(){};MovieBoxTV.player.seek(70000,true);webapis.avplay.seekTo=realSeek;seekDeadline();}''')
+  page.wait_for_function('nativeState==="PAUSED" && !MovieBoxTV.player.seekInFlight && MovieBoxTV.player.transportRecoveryCount===2')
+  page.evaluate('''()=>{webapis.avplay.seekTo=function(){};MovieBoxTV.player.seek(71000,true);seekDeadline();}''')
+  page.wait_for_function('MovieBoxTV.player.transportFailed && document.getElementById("transport-retry").offsetWidth>0')
+  assert page.evaluate('MovieBoxTV.player.active')
+  page.locator('#transport-retry').focus();page.keyboard.press('ArrowRight')
+  assert page.evaluate('document.activeElement.id') == 'transport-back'
   assert page.evaluate('MovieBoxTV.state.history["movie1:0:0"].position') >= 60000
-  checks['second_timeout_returns_to_details_with_saved_position_instead_of_looping'] = True
+  checks['bounded_recovery_keeps_retry_back_and_remote_navigation_available'] = True
   assert not errors, errors
   checks['no_runtime_exceptions'] = True
   browser.close()

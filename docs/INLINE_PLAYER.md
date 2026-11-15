@@ -33,10 +33,12 @@ Regression checks walk the whole icon row in both directions, assert the exact n
 The six catalogue filter fields share one content-sized row. Closed field widths include text, arrow and border padding; selected text remains readable. Apply and Reset stay below the fields. TV uses a horizontal scroll fallback only if unusual long selections exceed the available width.
 
 
-## Native seek lifecycle
+## TV media transport and recovery
 
-Samsung documents that AVPlay calls must wait for the asynchronous seek callback. Buffering events during a seek use its captured state, pause/resume intent is applied after the callback, and audio/quality/display changes are deferred. The latest requested seek target is retained. A ten-second missing-callback deadline cancels and reopens the native session once at that target with the requested pause state and existing subtitle selection. A second timeout returns to details with progress saved, preventing an endless retry loop. Late callbacks carry the previous epoch and cannot alter the recovered session.
+Auto uses the TV HTML video player for HTTP MP4 resources. The application configures its media User-Agent through Samsung WebSetting before media initialization, then creates the video element after configuration completes. Samsung native AVPlay remains selectable in Settings for alternate formats and embedded audio tracks. TVAudioControl remains available in both engines. HTML resume waits for metadata and a confirmed seek before starting playback; explicit pause intent survives seeks and decoder-generated pause events.
 
-A native `PLAYER_ERROR_SEEK_FAILED` (`InvalidValuesError`, code 26) was captured on the test TV during repeated seeks. That proves a native seek error, not the cause of an earlier whole-interface freeze whose process had already restarted. Browser tests deliberately withhold callbacks and reject overlapping commands; they do not certify every decoder/source.
+On connection failure the app refreshes authorized source metadata, preserves the selected position and pause/audio/subtitle preferences, and limits automatic recovery attempts. Native follow-up operations leave callback stacks before reopening media. Exhausted recovery keeps Retry and Back available in the player instead of exiting the app or accepting new seeks against a failed session. Network pipeline errors are not treated as unsupported codecs. A premature end event cannot mark a partially watched title finished or trigger autoplay.
 
-Reference: https://developer.samsung.com/smarttv/develop/api-references/samsung-product-api-references/avplay-api.html#AVPlayManager::seekTo
+A compact local journal survives restarts and records error/state evidence without media URLs or request headers. It is not uploaded. Private development captures are excluded from public packages.
+
+Official APIs: [Samsung WebSetting](https://developer.samsung.com/smarttv/develop/api-references/tizen-web-device-api-references/websetting-api.html) and [AVPlay](https://developer.samsung.com/smarttv/develop/api-references/samsung-product-api-references/avplay-api.html).

@@ -1,6 +1,6 @@
 /* Optional update policy and artwork regressions. No live network or dependencies. */
 const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path'),vm=require('node:vm');
-const store=new Map(),requests=[];let response={status:200,body:{tag_name:'v0.9.0',html_url:'https://github.com/emransm877/moviebox-tizen/releases/tag/v0.9.0'}},busy=false;
+const store=new Map(),requests=[];let response={status:200,body:{tag_name:'v0.10.0',html_url:'https://github.com/emransm877/moviebox-tizen/releases/tag/v0.10.0'}},busy=false;
 class XHR {
  open(method,url,async){this.method=method;this.url=url;assert.equal(async,true);}
  setRequestHeader(name,value){assert.equal(name,'Accept');assert.equal(value,'application/vnd.github+json');}
@@ -11,19 +11,19 @@ context.window=context;
 for(const name of ['releases.js','artwork.js'])vm.runInContext(fs.readFileSync(path.join(__dirname,'../app/js',name),'utf8'),context);
 (async()=>{
  const R=context.MovieBoxReleaseVersion;
- assert.equal(R.current,'0.8.4');assert(R.newer('v0.9.0','0.8.4'));assert(!R.newer('v0.8.4','0.8.4'));assert(!R.newer('v0.3.1-beta','0.8.4'));
- assert.equal(R.safeRelease({tag_name:'v0.9.0',html_url:'https://evil.invalid/releases/tag/v0.9.0'}),null);
+ assert.equal(R.current,'0.9.2');assert(R.newer('v0.10.0','0.9.2'));assert(!R.newer('v0.9.2','0.9.2'));assert(!R.newer('v0.3.1-beta','0.9.2'));
+ assert.equal(R.safeRelease({tag_name:'v0.10.0',html_url:'https://evil.invalid/releases/tag/v0.10.0'}),null);
  assert.equal(R.safeRelease({...response.body,prerelease:true}),null);
  const releases=new context.MovieBoxReleases({isBusy:()=>busy});
  busy=true;await releases.check(false);assert.equal(requests.length,0,'Automatic update checks wait until playback/startup is idle');
- busy=false;const available=await releases.check(false);assert.equal(available.tag,'v0.9.0');assert.equal(requests.length,1);
+ busy=false;const available=await releases.check(false);assert.equal(available.tag,'v0.10.0');assert.equal(requests.length,1);
  await releases.check(false);assert.equal(requests.length,1,'At most one automatic check per day');
  releases.later();assert.equal(releases.pending,null);assert(releases.preferences.snoozeUntil>Date.now()+86000000);
  releases.preferences.checkedAt=0;await releases.check(false);assert.equal(releases.pending,null,'Later suppresses the reminder');
  await releases.check(true);assert(releases.pending,'Explicit manual checks can review a deferred update');
  releases.skip();releases.preferences.checkedAt=0;releases.preferences.snoozeUntil=0;await releases.check(false);assert.equal(releases.pending,null,'Skipped version stays skipped');
- response={status:200,body:{tag_name:'v0.10.0',html_url:'https://github.com/emransm877/moviebox-tizen/releases/tag/v0.10.0'}};
- releases.preferences.checkedAt=0;await releases.check(false);assert.equal(releases.pending.tag,'v0.10.0','A newer release is not skipped');
+ response={status:200,body:{tag_name:'v0.11.0',html_url:'https://github.com/emransm877/moviebox-tizen/releases/tag/v0.11.0'}};
+ releases.preferences.checkedAt=0;await releases.check(false);assert.equal(releases.pending.tag,'v0.11.0','A newer release is not skipped');
  releases.setEnabled(false);const count=requests.length;releases.preferences.checkedAt=0;await releases.check(false);assert.equal(requests.length,count,'Settings disable automatic checks');
  await releases.check(true);assert(releases.pending&&releases.manualPending,'Manual checks work even with automatic checks disabled');
  response={status:404,body:{}};await releases.check(true);assert.equal(releases.status,'no-release');assert.equal(releases.pending,null);

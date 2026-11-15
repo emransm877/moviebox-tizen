@@ -38,14 +38,14 @@
   function tvAudio(){return global.tizen&&tizen.tvaudiocontrol;}
   function syncVolume(){
     var api=tvAudio(),volume,muted;
-    try{if(player.native&&api){volume=api.getVolume();muted=api.isMute();}else if(!player.native){volume=Math.round(player.video.volume*100);muted=player.video.muted;}else{$('mute-button').disabled=true;$('volume-slider').disabled=true;return;}
+    try{if(api){volume=api.getVolume();muted=api.isMute();}else if(!player.native){volume=Math.round(player.video.volume*100);muted=player.video.muted;}else{$('mute-button').disabled=true;$('volume-slider').disabled=true;return;}
       $('mute-button').disabled=false;$('volume-slider').disabled=false;$('volume-slider').value=volume;
       var label=muted?'Unmute':'Mute',image='assets/player-icons/volume-'+(muted||volume===0?'mute':'high')+'.svg';$('mute-button').title='Volume: '+volume+'%'+(muted?' · Muted':'');$('mute-button').setAttribute('aria-label','Volume');$('mute-button').querySelector('img').src=image;
       $('volume-mute').title=label;$('volume-mute').setAttribute('aria-label',label);$('volume-mute').querySelector('img').src=image;$('volume-level').textContent=volume+'%';
     }catch(_){$('mute-button').disabled=true;$('volume-slider').disabled=true;}
   }
-  $('volume-mute').onclick=function(){try{var api=tvAudio();if(player.native&&api)api.setMute(!api.isMute());else player.video.muted=!player.video.muted;syncVolume();}catch(_){};};
-  $('volume-slider').oninput=function(){try{var value=Math.max(0,Math.min(100,Number(this.value))),api=tvAudio();if(player.native&&api)api.setVolume(value);else player.video.volume=value/100;syncVolume();}catch(_){};};
+  $('volume-mute').onclick=function(){try{var api=tvAudio();if(api)api.setMute(!api.isMute());else player.video.muted=!player.video.muted;syncVolume();}catch(_){};};
+  $('volume-slider').oninput=function(){try{var value=Math.max(0,Math.min(100,Number(this.value))),api=tvAudio();if(api)api.setVolume(value);else player.video.volume=value/100;syncVolume();}catch(_){};};
   var started=player.callbacks.onStarted;player.callbacks.onStarted=function(){if(started)started.apply(this,arguments);syncVolume();};
   try{if(tvAudio())tvAudio().setVolumeChangeListener(syncVolume);}catch(_){}
   player.video.addEventListener('volumechange',syncVolume);

@@ -219,7 +219,7 @@
       if (epoch !== generation || id !== currentKey()) return;
       $('watch-button').disabled = false; selectionChanged(); playerSelection = {subject:subject,season:se,episode:ep,key:id};
       var language = state.subtitleTracks[id] || state.settings.language, enabled = language !== 'off' && state.settings.subtitles;
-      showPage('player'); player.open(resolved.subject,resolved.streams,{canonicalSubject:subject,key:id,season:se,episode:ep,position:history.completed ? 0 : history.position || 0,initialStream:resolved.initialStream,quality:state.settings.quality,audioLanguage:audioCode,language:language,subtitleEnabled:enabled,hasNext:!!nextSelection(),autoplay:Number(subject.subjectType) === 2});
+      showPage('player'); player.open(resolved.subject,resolved.streams,{canonicalSubject:subject,key:id,season:se,episode:ep,position:history.completed ? 0 : history.position || 0,initialStream:resolved.initialStream,quality:state.settings.quality,engine:state.settings.playerEngine||'auto',audioLanguage:audioCode,language:language,subtitleEnabled:enabled,hasNext:!!nextSelection(),autoplay:Number(subject.subjectType) === 2});
       episodeTransition = false; nextUpDismissed = ''; nextPrefetchKey = ''; $('next-up').hidden = true; $('play-pause').focus();
     }).catch(function (error) { if (epoch === generation) { $('watch-button').disabled = false; selectionChanged(); if (continuation) finishPlayback('The next episode could not be played. ' + (error.message || '')); else toast(error.message || 'This selection could not be played. Please try again.'); } });
   }
@@ -294,8 +294,9 @@
   setTimeout(function () { releases.check(false); },12500);
   setInterval(function () { releases.check(false); },900000);
   Array.prototype.forEach.call(document.querySelectorAll('[data-nav]'),function (button) { button.onclick = function () { if (button.dataset.nav === 'settings') { generation++; showPage('settings'); setNav('settings'); loadSettings(); navigation.focus($('preferred-theme')); } else browse(button.dataset.nav); }; });
-  function loadSettings() { $('preferred-theme').value = state.settings.theme; $('preferred-quality').value = state.settings.quality; $('preferred-language').value = state.settings.language; $('preferred-subtitles').checked = state.settings.subtitles; $('optional-updates').checked = releases.preferences.enabled; renderUpdates(); $('settings-platform').textContent = player.native ? 'Samsung AVPlay · Hardware-decoded playback on your TV. History and downloaded subtitles stay on this TV.' : 'Desktop browser preview · Native Samsung decoding must be verified on the TV. History and subtitles stay in this browser profile.'; }
+  function loadSettings() { $('preferred-engine').value=state.settings.playerEngine||'auto'; $('preferred-theme').value = state.settings.theme; $('preferred-quality').value = state.settings.quality; $('preferred-language').value = state.settings.language; $('preferred-subtitles').checked = state.settings.subtitles; $('optional-updates').checked = releases.preferences.enabled; renderUpdates(); $('settings-platform').textContent = global.tizen ? 'Samsung AVPlay · Hardware-decoded playback on your TV. History and downloaded subtitles stay on this TV.' : 'Desktop browser preview · Native Samsung decoding must be verified on the TV. History and subtitles stay in this browser profile.'; }
   $('preferred-theme').onchange = function () { state.settings.theme = global.MovieBoxThemes.apply(this.value); persist(true); navigation.invalidate(); };
+  $('preferred-engine').onchange=function(){state.settings.playerEngine=this.value;persist();};
   $('preferred-quality').onchange = function () { state.settings.quality = this.value; persist(); };
   $('preferred-language').onchange = function () { state.settings.language = this.value.trim().toLowerCase() || 'en'; persist(); };
   $('preferred-subtitles').onchange = function () { state.settings.subtitles = this.checked; persist(); };
