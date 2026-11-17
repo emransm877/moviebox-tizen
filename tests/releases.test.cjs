@@ -11,7 +11,7 @@ context.window=context;
 for(const name of ['releases.js','artwork.js'])vm.runInContext(fs.readFileSync(path.join(__dirname,'../app/js',name),'utf8'),context);
 (async()=>{
  const R=context.MovieBoxReleaseVersion;
- assert.equal(R.current,'0.9.2');assert(R.newer('v0.10.0','0.9.2'));assert(!R.newer('v0.9.2','0.9.2'));assert(!R.newer('v0.3.1-beta','0.9.2'));
+ assert.equal(R.current,'0.9.3');assert(R.newer('v0.10.0','0.9.3'));assert(!R.newer('v0.9.3','0.9.3'));assert(!R.newer('v0.3.1-beta','0.9.3'));
  assert.equal(R.safeRelease({tag_name:'v0.10.0',html_url:'https://evil.invalid/releases/tag/v0.10.0'}),null);
  assert.equal(R.safeRelease({...response.body,prerelease:true}),null);
  const releases=new context.MovieBoxReleases({isBusy:()=>busy});

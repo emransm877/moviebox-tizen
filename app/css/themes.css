@@ -78,3 +78,12 @@ select:not(.player-icon-select){appearance:none;-webkit-appearance:none;padding:
 .catalogue-filters{background:var(--panel);border-color:var(--line)}.catalogue-filter-fields label{color:var(--muted)}.catalogue-filter-fields select{color:var(--text)}
 
 .transport-recovery{position:absolute;right:24px;bottom:150px;z-index:25;width:560px;max-width:calc(100% - 48px);padding:22px;background:var(--surface);border:1px solid var(--line);border-radius:16px}.transport-recovery p{font-size:21px;line-height:1.4}.transport-recovery>div{display:flex;gap:12px;margin-top:18px}.transport-recovery button{min-height:48px;font-size:19px;padding:10px 16px}
+
+#detail-backdrop{background-size:contain;background-repeat:no-repeat}
+
+/* Cinematic hero: title-owned landscape artwork fills the entire banner. */
+.hero-art{inset:0;background-size:cover;background-position:center 20%;background-repeat:no-repeat}
+.hero-copy{width:65%}
+.hero-shade{background:linear-gradient(90deg,var(--hero-shade) 0%,transparent 100%)}
+:root[data-theme=orbital] .hero-art{inset:0;background-position:20% 20%}
+:root[data-theme=orbital] .hero-shade{background:linear-gradient(270deg,var(--hero-shade) 0%,transparent 100%)}

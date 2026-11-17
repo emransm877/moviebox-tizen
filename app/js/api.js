@@ -11,6 +11,7 @@
   }
   class MovieBoxAPI {
     constructor() {
+      this.bannerIndex = {};
       this.webToken = ''; this.nativeToken = ''; this.warming = null; this.captionCache = new Map(); this.resourceContext = new Map(); this.captionTimes = new Map();
       this.preview = !root.tizen && /^https?:$/.test(location.protocol);
       this.streamUserAgent = root.MovieBoxMediaUserAgent || 'com.community.oneroom/50020104 (Linux; U; Android 17; en_US; TizenTV; Build/LOCAL; Cronet/135.0.7012.3) MovieBoxTV/0.1';
@@ -21,7 +22,7 @@
     }
     async proxy(method,args) {
       const response = await fetch('/dev-api', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({method:method,args:args || []})});
-      const result = await response.json(); if (!response.ok || result.error) throw new Error(result.error || 'Preview service unavailable'); return result.data;
+      const result = await response.json(); if (!response.ok || result.error) throw new Error(result.error || 'Preview service unavailable'); return root.MovieBoxArtwork ? root.MovieBoxArtwork.prepare(result.data,this.bannerIndex) : result.data;
     }
     request(url, body, headers, native) {
       return new Promise((resolve,reject) => {
@@ -32,7 +33,8 @@
             if (xhr.status < 200 || xhr.status >= 300) throw new Error('Service HTTP '+xhr.status);
             const user=xhr.getResponseHeader('x-user'); if (user) { const token=JSON.parse(user).token; if(native)this.nativeToken=token;else this.webToken=token; }
             const result=JSON.parse(xhr.responseText); if(result.code != null && Number(result.code)!==0)throw new Error(result.message || 'Service refused this request');
-            resolve(result.data == null ? result : result.data);
+            const data=result.data == null ? result : result.data;
+            resolve(root.MovieBoxArtwork ? root.MovieBoxArtwork.prepare(data,this.bannerIndex) : data);
           } catch(error) { reject(error); }
         };
         xhr.onerror=() => reject(new Error('Cannot reach MovieBox. Check the TV network.'));

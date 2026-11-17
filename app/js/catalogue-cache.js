@@ -1,7 +1,7 @@
 (function(global){
   'use strict';
   var STORAGE='moviebox-tv-catalogue-cache',TTL=300000;
-  function compact(subject){var out={};['subjectId','subjectType','title','releaseDate','imdbRatingValue','genre','countryName','hasResource','corner'].forEach(function(k){if(subject[k]!==undefined)out[k]=subject[k];});if(subject.cover&&typeof subject.cover==='object'){out.cover={};['url','width','height','thumbnail'].forEach(function(k){if(subject.cover[k]!==undefined)out.cover[k]=subject.cover[k];});}return out;}
+  function compact(subject){var out={};['subjectId','subjectType','title','releaseDate','imdbRatingValue','genre','countryName','hasResource','corner','banner','backdrop','stills'].forEach(function(k){if(subject[k]!==undefined)out[k]=subject[k];});if(subject.cover&&typeof subject.cover==='object'){out.cover={};['url','width','height','thumbnail'].forEach(function(k){if(subject.cover[k]!==undefined)out.cover[k]=subject.cover[k];});}return out;}
   function Cache(){this.entries={};this.timer=null;try{var text=localStorage.getItem(STORAGE);if(text&&text.length<1200000){var data=JSON.parse(text);if(data.version===2&&data.entries&&typeof data.entries==='object')this.entries=data.entries;}}catch(_){} }
   Cache.prototype.key=function(kind,filters){var out={};Object.keys(filters).sort().forEach(function(k){if(['All','ForYou','',null,undefined].indexOf(filters[k])<0)out[k]=filters[k];});return kind+':'+JSON.stringify(out);};
   Cache.prototype.get=function(key){var value=this.entries[key];if(!value||!Array.isArray(value.items)||!Number.isFinite(value.at)||Date.now()-value.at>7*86400000||!value.items.every(function(s){return s&&s.subjectId&&s.title;}))return null;return JSON.parse(JSON.stringify(value));};

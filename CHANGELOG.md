@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.9.3 - 2026-11-18
+
+- Read the service's HD promotional banner records and attach them only to their exact movie/series identity. Exclude trailer frames, posters, low-resolution images and mismatched subject IDs.
+- Keep full-width hero framing, clear old artwork before changing slides, and ignore delayed image responses from previous slides.
+- Preserve banner metadata in the catalogue cache and keep browsing/detail posters proportional.
+- Artwork identity tests and the five-theme browser checks pass. Physical-TV installation of this revision is pending.
+
 ## 0.9.2 - 2026-11-15
 
 - Configure the application User-Agent before media initialization and create the video element only after configuration completes. Treat network pipeline errors as transport failures, rather than unsupported codecs.

@@ -89,12 +89,12 @@
 
   var heroArtworkEpoch = 0;
   function renderHero(subject) {
-    $('hero').hidden = !subject || route !== 'home'; if (!subject) return;
+    $('hero').hidden = !subject || route !== 'home'; if (!subject) { heroArtworkEpoch++; $('hero-art').style.backgroundImage=''; return; }
     $('hero-title').textContent = subject.title;
     $('hero-description').textContent = [String(subject.releaseDate || '').slice(0,4),Number(subject.subjectType) === 2 ? 'TV Show' : 'Movie',subject.genre].filter(Boolean).join(' · ');
-    var url = image(subject,'stills',960) || image(subject,'cover',960), epoch = ++heroArtworkEpoch;
+    var url = global.MovieBoxArtwork.banner(subject,1280), epoch = ++heroArtworkEpoch;
     $('hero-art').style.backgroundImage = '';
-    if (url) { var art = new Image(); art.onload = function () { if (epoch === heroArtworkEpoch) $('hero-art').style.backgroundImage = 'url("' + url.replace(/["\\\n\r]/g,'') + '")'; }; art.src = url; }
+    if (url) { var art = new Image(); art.onload = function () { if (epoch === heroArtworkEpoch && art.naturalWidth>=1280 && art.naturalHeight>=600 && art.naturalWidth/Math.max(1,art.naturalHeight)>=1.45) $('hero-art').style.backgroundImage = 'url("' + url.replace(/["\\\n\r]/g,'') + '")'; }; art.src = url; }
     $('hero-watch').onclick = function () { returnFocus = $('hero-watch'); openDetail(subject,true); };
     $('hero-info').onclick = function () { returnFocus = $('hero-info'); openDetail(subject); };
   }
