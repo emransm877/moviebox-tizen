@@ -1,11 +1,15 @@
 # MovieBox TV App
 
+[Shared MovieBox project hub](https://emransm877.github.io/moviebox-projects/) · [Samsung TV guide](https://emransm877.github.io/moviebox-projects/samsung-tv/)
+
 A small, independent Samsung Tizen client, installed on the TV as **MovieBox**.
 The interface is designed for the Samsung remote and runs independently on the TV.
 Auto uses the TV's HTML video engine for MP4 with app-scoped media request headers;
 Samsung AVPlay remains selectable for alternate formats and embedded audio tracks.
 
-**Preview 0.9.3:** HD promotional banners are matched to exact title IDs. Trailer
+**Published download: 0.9.2. Development source: 0.9.3 (unreleased).**
+
+Source 0.9.3: HD promotional banners are matched to exact title IDs. Trailer
 frames and portrait covers are no longer used as hero banners. Artwork identity
 checks and the five-theme browser suite pass; installation of this revision on
 the physical TV is pending. The earlier 0.9.2 transport was tested on Samsung
@@ -14,7 +18,7 @@ See [hardware validation](docs/hardware-validation.md).
 
 ## Download and install
 
-[**Download TV install bundle**](https://github.com/emransm877/moviebox-tizen/releases/download/v0.9.3/MovieBox-TV-0.9.3-install-bundle.zip)
+[**Download TV install bundle**](https://github.com/emransm877/moviebox-tizen/releases/download/v0.9.2/MovieBox-TV-0.9.2-install-bundle.zip)
 
 This is a developer-install bundle: an unsigned WGT plus a Windows helper that
 signs and installs using your own Samsung TV certificate profile. Extract it,
