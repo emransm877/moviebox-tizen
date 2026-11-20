@@ -1,4 +1,4 @@
-# MovieBox TV App
+# MovieBox Samsung Tizen TV App
 
 [Shared MovieBox project hub](https://emransm877.github.io/moviebox-projects/) · [Samsung TV guide](https://emransm877.github.io/moviebox-projects/samsung-tv/)
 
@@ -130,3 +130,11 @@ Choose any of five persistent themes in Settings, including a matching MovieBox 
 ## Catalogue cache and Continue watching
 
 Movies/TV Shows restore their cached pages and position immediately. After five minutes, the app checks for new results in the background; Apply filters can refresh manually. In Continue watching choose **Select titles**, select one/several or **Select all**, then **Remove selected**. **Undo removal** restores the last batch during the current session. My list is preserved. See [details](docs/CACHE_AND_HISTORY.md).
+
+
+## Other MovieBox platforms
+
+[Android phone patch](https://github.com/emransm877/moviebox-android) · [Windows desktop app](https://github.com/emransm877/moviebox-desktop) · [Android TV / Google TV app](https://github.com/emransm877/moviebox-android-tv)
+
+Choose the package for your operating system. These are separate independent
+projects; an APK, Windows EXE and Samsung WGT are not interchangeable.
