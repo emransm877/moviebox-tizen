@@ -7,6 +7,7 @@ from pathlib import Path
 import threading
 from playwright.sync_api import sync_playwright
 from ui_acceptance import ROOT, STUB, QuietHandler
+from fixture_boot import FixtureBootEvidence
 
 CASES = {
     'season-single': ['Season 1'],
@@ -42,9 +43,10 @@ def run(out):
                     context.route('**/$WEBAPIS/**', lambda route: route.fulfill(content_type='text/javascript', body=''))
                     context.add_init_script('localStorage.setItem("moviebox-tv-library",JSON.stringify({settings:{theme:'+json.dumps(theme)+'},history:{},saved:{}}));')
                     page = context.new_page()
+                    boot = FixtureBootEvidence(page, out, f'{width}-{theme}')
                     page.on('pageerror', lambda error: errors.append(str(error)))
-                    page.goto(f'http://127.0.0.1:{server.server_port}/')
-                    page.locator('.poster-card').first.wait_for()
+                    boot.goto(f'http://127.0.0.1:{server.server_port}/')
+                    boot.wait_for_catalogue()
                     page.locator('[data-nav=settings]').click()
                     for name, options in CASES.items():
                         page.evaluate('''options=>{
