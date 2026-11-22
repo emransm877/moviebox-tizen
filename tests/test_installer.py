@@ -12,11 +12,26 @@ import sys
 import tempfile
 import time
 import unittest
+from unittest.mock import patch
 import zipfile
 
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE = ROOT / 'tools' / 'Install-MovieBoxTV.ps1'
 POWERSHELL = shutil.which('powershell.exe')
+PWSH = shutil.which('pwsh.exe')
+
+
+def powershell_environment(executable):
+    # GitHub's pwsh parent exports its own PSModulePath. A legacy child must
+    # discover modules for powershell.exe, not inherit PowerShell 7 modules.
+    env = dict(os.environ, MOVIEBOX_WRAPPER_TEST='SYNTHETIC_EXPANDED_VALUE')
+    family = 'WindowsPowerShell' if Path(executable).name.lower() == 'powershell.exe' else 'PowerShell'
+    paths = [Path(executable).resolve().parent / 'Modules']
+    if env.get('ProgramFiles'):
+        paths.append(Path(env['ProgramFiles']) / family / 'Modules')
+    paths.append(Path.home() / 'Documents' / family / 'Modules')
+    env['PSModulePath'] = os.pathsep.join(str(path) for path in paths)
+    return env
 
 
 def literal(value):
@@ -30,11 +45,33 @@ class InstallerTests(unittest.TestCase):
         self.addCleanup(self.directory.cleanup)
         self.work = Path(self.directory.name)
 
-    def powershell(self, script, timeout=12):
+    def powershell(self, script, timeout=12, executable=None):
+        executable = executable or POWERSHELL
         encoded = base64.b64encode(script.encode('utf-16le')).decode('ascii')
-        env = dict(os.environ, MOVIEBOX_WRAPPER_TEST='SYNTHETIC_EXPANDED_VALUE')
-        return subprocess.run([POWERSHELL, '-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-EncodedCommand', encoded],
-                              capture_output=True, text=True, timeout=timeout, env=env)
+        return subprocess.run([executable, '-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-EncodedCommand', encoded],
+                              capture_output=True, text=True, timeout=timeout, env=powershell_environment(executable))
+
+    def test_parent_ps7_module_path_cannot_poison_target_hash_and_archive_commands(self):
+        owned = self.work/'owned.txt'
+        owned.write_bytes(b'Owned module compatibility fixture\n')
+        archive = self.work/'owned.zip'
+        with zipfile.ZipFile(archive, 'w') as zipped:
+            zipped.write(owned, 'owned.txt')
+        runtimes = [POWERSHELL] + ([PWSH] if PWSH else [])
+        for index, executable in enumerate(runtimes):
+            with self.subTest(runtime=executable):
+                destination = self.work/f'expanded-{index}'
+                script = "$ErrorActionPreference='Stop'; $hash=Get-FileHash -Algorithm SHA256 -LiteralPath " + literal(owned) + '; '
+                script += 'Expand-Archive -LiteralPath ' + literal(archive) + ' -DestinationPath ' + literal(destination) + '; '
+                script += "Write-Output ('PROBE:'+(ConvertTo-Json -Compress @{hash=$hash.Hash;modulePath=$env:PSModulePath;home=$PSHOME;edition=$PSVersionTable.PSEdition}))"
+                with patch.dict(os.environ, {'PSModulePath':r'C:\PowerShell7-only\Modules'}):
+                    result = self.powershell(script, executable=executable)
+                self.assertEqual(result.returncode, 0, result.stdout+result.stderr)
+                record = json.loads(next(line[6:] for line in result.stdout.splitlines() if line.startswith('PROBE:')))
+                self.assertEqual(record['hash'].lower(), hashlib.sha256(owned.read_bytes()).hexdigest())
+                self.assertEqual((destination/'owned.txt').read_bytes(), owned.read_bytes())
+                self.assertIn(Path(record['home'])/'Modules', [Path(value) for value in record['modulePath'].split(os.pathsep)])
+                self.assertNotIn('PowerShell7-only', record['modulePath'])
 
     def wrapper(self, arguments, executable=None, timeout=5):
         # Extract only the function AST; never execute the installer body.
