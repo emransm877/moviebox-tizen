@@ -61,8 +61,9 @@
     bindVideo('timeupdate', function () { if (!self.native) self.tick(self.video.currentTime * 1000); });
     bindVideo('loadedmetadata', function () { if (self.native) return; self.duration = self.video.duration * 1000; if (self.htmlPrepared) self.htmlPrepared(); else if (self.pendingResume) { self.video.currentTime = Math.min(self.pendingResume, Math.max(0, self.duration - 1000)) / 1000; self.pendingResume = 0; } });
     bindVideo('seeked', function () { if (!self.native && self.seekInFlight) self.finishSeek(self.seekInFlight,null); });
-    bindVideo('playing', function () { if (self.native) return; self.loading(false); self.paused = false; self.updatePlayButton(); if (self.callbacks.onStarted) self.callbacks.onStarted(); });
-    bindVideo('pause', function () { if (!self.native && !self.preparing && !self.seekInFlight && self.seekTarget===null && Date.now()>(self.htmlSeekGrace||0) && self.active) { self.paused = true; self.updatePlayButton(); } });
+    // Queued HTML events must agree with the element after newer play/pause commands.
+    bindVideo('playing', function () { if (self.native || self.video.paused) return; self.loading(false); self.paused = false; self.updatePlayButton(); if (self.callbacks.onStarted) self.callbacks.onStarted(); });
+    bindVideo('pause', function () { if (!self.native && self.video.paused && !self.preparing && !self.seekInFlight && self.seekTarget===null && Date.now()>(self.htmlSeekGrace||0) && self.active) { self.paused = true; self.updatePlayButton(); } });
     bindVideo('waiting', function () { if (!self.native && self.active) self.buffering(); });
     bindVideo('ended', function () { if (!self.native) self.notifyEnded(); });
     bindVideo('error', function () { if (self.active && !self.native) self.error('The browser cannot decode this source. The TV uses its own native player.'); });
@@ -85,7 +86,7 @@
   }
   Player.prototype.loading = function (show, text) { if (!show) { clearTimeout(this.bufferTimer); this.bufferTimer = null; this.bufferWaiting = false; } $('player-loading').hidden = !show; if (text) $('loading-text').textContent = text; };
   Player.prototype.bufferingIndicator = function (percent) {
-    this.bufferText = percent === undefined ? 'Bufferingâ€¦' : 'Buffering Â· ' + percent + '%';
+    this.bufferText = percent === undefined ? 'Buffering…' : 'Buffering · ' + percent + '%';
     if (this.preparing) return;
     if (this.bufferWaiting) { if (!$('player-loading').hidden) $('loading-text').textContent = this.bufferText; return; }
     this.bufferWaiting = true;
@@ -98,7 +99,7 @@
   Player.prototype.open = function (subject, streams, options) {
     options = options || {}; this.pendingSeekActions = {}; this.seekRecoveryUsed = false; this.pendingAudioRestart = null; $('restart-audio').hidden = true;
     this.subject = subject; this.baseSubject = options.canonicalSubject || subject; this.streams = streams; this.options = options; this.key = options.key || String(subject.subjectId); this.subtitleKey = String(subject.subjectId) + ':' + Number(options.season || 0) + ':' + Number(options.episode || 0); this.preference = options.quality || 'auto'; this.active = true; this.page.hidden = false; this.page.tabIndex = -1; this.cues = []; this.captionEpoch++; this.audioEpoch++; this.audioTracks = [];
-    $('subtitle-overlay').textContent = ''; $('now-title').textContent = subject.title + (options.season ? ' Â· S' + options.season + ' E' + options.episode : '');
+    $('subtitle-overlay').textContent = ''; $('now-title').textContent = subject.title + (options.season ? ' · S' + options.season + ' E' + options.episode : '');
     $('episode-browser').hidden = Number((options.canonicalSubject || subject).subjectType) !== 2;
     this.populateQualities(); this.populateAudioTracks();
     var speed = global.navigator.connection && navigator.connection.downlink;
@@ -109,8 +110,8 @@
     this.reveal();
   };
   Player.prototype.start = function (stream, position, paused) {
-    var self = this, epoch = ++this.epoch; this.resetSeek(); this.preparing = true; this.seekDiagnostics.epoch = epoch; this.seekDiagnostics.state = 'preparing'; this.stream = stream; this.completed = false; this.endNotified = false; this.position = Math.max(0,Math.round(Number(position) || 0)); this.duration = Math.max(0,Math.round(Number(stream.duration || 0) * 1000)); this.paused = !!paused; this.lastQualityChange = Date.now(); this.loading(true, 'Opening ' + stream.resolutions + 'pâ€¦');
-    $('quality-select').options[0].text = 'Auto Â· ' + stream.resolutions + 'p'; this.updatePlayButton();
+    var self = this, epoch = ++this.epoch; this.resetSeek(); this.preparing = true; this.seekDiagnostics.epoch = epoch; this.seekDiagnostics.state = 'preparing'; this.stream = stream; this.completed = false; this.endNotified = false; this.position = Math.max(0,Math.round(Number(position) || 0)); this.duration = Math.max(0,Math.round(Number(stream.duration || 0) * 1000)); this.paused = !!paused; this.lastQualityChange = Date.now(); this.loading(true, 'Opening ' + stream.resolutions + 'p…');
+    $('quality-select').options[0].text = 'Auto · ' + stream.resolutions + 'p'; this.updatePlayButton();
     function prepared() {
       if (epoch !== self.epoch || !self.active) return;
       self.duration = self.native ? self.av.getDuration() : self.video.duration * 1000;
@@ -184,7 +185,7 @@
     var id = value.slice(8), variant = audioVariants(this.baseSubject).find(function (item) { return String(item.subjectId) === id; });
     if (id === String(this.subject.subjectId)) { this.audioSelection = value; return; }
     if (!variant) { $('audio-select').value = this.audioSelection; return; }
-    var request = ++this.audioEpoch, playbackEpoch = this.epoch, subject = audioSubject(this.baseSubject,variant); this.pendingAudioRestart = null; $('restart-audio').hidden = true; $('audio-select').disabled = true; $('stream-status').textContent = 'Preparing ' + languageLabel(variant) + ' audioâ€¦';
+    var request = ++this.audioEpoch, playbackEpoch = this.epoch, subject = audioSubject(this.baseSubject,variant); this.pendingAudioRestart = null; $('restart-audio').hidden = true; $('audio-select').disabled = true; $('stream-status').textContent = 'Preparing ' + languageLabel(variant) + ' audio…';
     return this.api.playback(subject,Number(this.options.season || 0),Number(this.options.episode || 0)).then(function (streams) {
       if (!self.active || request !== self.audioEpoch || playbackEpoch !== self.epoch) return;
       try { streams = matchingRuntime(streams,Number(self.stream.duration) || self.duration / 1000); }
@@ -225,7 +226,7 @@
     if (this.seekTarget !== null || this.seekInFlight) this.seekDiagnostics.coalesced++;
     this.seekTarget = position; this.seekDiagnostics.requested++; this.seekDiagnostics.target = position; this.seekDiagnostics.state = this.preparing ? 'waiting-prepare' : this.seekInFlight ? 'queued' : 'debouncing';
     this.seekGraceUntil = Date.now() + 8000; this.bufferEvents = [];
-    this.reveal(); this.updateTimeDisplay(); $('stream-status').textContent = 'Seeking to ' + clock(position) + 'â€¦';
+    this.reveal(); this.updateTimeDisplay(); $('stream-status').textContent = 'Seeking to ' + clock(position) + '…';
     clearTimeout(this.seekTimer); this.seekTimer = null; var self = this;
     if (immediate) this.flushSeek(); else this.seekTimer = setTimeout(function () { self.seekTimer = null; self.flushSeek(); },150);
   };

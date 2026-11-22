@@ -1,11 +1,30 @@
 # Changelog
 
+### 0.9.3 development follow-up — 2026-11-22
+
+- Reinstall and launch verification on the existing Samsung U8000F after its
+  Tizen 10 upgrade; document same-author recovery and future-firmware limits.
+- Repair double-encoded player punctuation and keep international metadata,
+  subtitle cues, URLs and identifiers lossless through shared UI/cache paths.
+- Add encoding/source checks, optional-capability regressions and real decoded
+  HTML playback-event tests. Ignore stale pause/playing events that disagree
+  with the media element's current state.
+- Keep horizontal menus above scrolled content; add readable navigation names
+  in compact themes and correct small status/count labels.
+- Fit each genuine cover to its own aspect ratio without cropping; preserve
+  catalogue row navigation and focus after loading more in every section.
+- Align player bars, allow vertical navigation out of single-line Settings fields,
+  size dropdowns to their contents and refine the right-side episode drawer.
+- Bound installer commands, verify the selected TV and installation/launch,
+  preserve the app identity, and validate reproducible install bundles in CI.
+
 ## 0.9.3 - 2026-11-18
 
 - Read the service's HD promotional banner records and attach them only to their exact movie/series identity. Exclude trailer frames, posters, low-resolution images and mismatched subject IDs.
 - Keep full-width hero framing, clear old artwork before changing slides, and ignore delayed image responses from previous slides.
 - Preserve banner metadata in the catalogue cache and keep browsing/detail posters proportional.
-- Artwork identity tests and the five-theme browser checks pass. Physical-TV installation of this revision is pending.
+- Artwork identity tests and the five-theme browser checks passed. A later
+  follow-up installed this source revision on Tizen 10; see the entry above.
 
 ## 0.9.2 - 2026-11-15
 

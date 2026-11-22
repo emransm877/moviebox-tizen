@@ -61,8 +61,12 @@
       if (entry.top <= firstTop + 8 && main.scrollTop > 0) { main.scrollTop = 0; this.invalidate(); return; }
     }
     if (entry.top < bounds.top + 20 || entry.bottom > bounds.bottom - 24 || entry.left < bounds.left || entry.right > bounds.right) {
+      // Nearest alignment may do nothing inside our visibility margin. Keep
+      // cached bounds unless an ancestor actually scrolls (including the page).
+      var ancestors = [], parent = element.parentElement;
+      while (parent) { ancestors.push({element:parent,top:parent.scrollTop,left:parent.scrollLeft}); parent = parent.parentElement; }
       try { element.scrollIntoView({block:'nearest',inline:'nearest',behavior:'auto'}); } catch (_) { element.scrollIntoView(false); }
-      this.invalidate();
+      if (ancestors.some(function (record) { return record.element.scrollTop !== record.top || record.element.scrollLeft !== record.left; })) this.invalidate();
     }
   };
   Navigation.prototype.first = function () { this.focus(this.items()[0]); };
@@ -71,7 +75,6 @@
     if (this.picker) this.closePicker();
     var shade = document.createElement('div'); shade.className = 'modal-shade remote-picker'; shade.setAttribute('role','dialog'); shade.setAttribute('aria-modal','true');
     var panel = document.createElement('div'); panel.className = 'modal';
-    var longest=Array.prototype.reduce.call(select.options,function(width,option){return Math.max(width,option.textContent.length);},0);
     panel.style.width='max-content';
     var title = document.createElement('h2'); title.textContent = select.getAttribute('aria-label') || (select.labels && select.labels[0] ? select.labels[0].textContent.split('\n')[0].trim() : 'Choose an option'); panel.appendChild(title);
     var choices = document.createElement('div'); choices.className = 'remote-picker-options'; panel.appendChild(choices);
@@ -84,8 +87,15 @@
     var context=document.createElement('canvas').getContext('2d'),first=choices.querySelector('button');
     var optionStyle=getComputedStyle(first||cancel);context.font=optionStyle.font||[optionStyle.fontWeight,optionStyle.fontSize,optionStyle.fontFamily].join(' ');
     var optionWidth=Array.prototype.reduce.call(select.options,function(width,option){return Math.max(width,context.measureText(option.textContent).width);},0);
-    var titleStyle=getComputedStyle(title);context.font=titleStyle.font||[titleStyle.fontWeight,titleStyle.fontSize,titleStyle.fontFamily].join(' ');var titleWidth=context.measureText(title.textContent).width;
-    panel.style.width=Math.ceil(Math.min(innerWidth-40,560,Math.max(200,optionWidth+96,titleWidth+46)))+'px';
+    function horizontalSpace(style) { return ['paddingLeft','paddingRight','borderLeftWidth','borderRightWidth'].reduce(function(total,key){return total+(parseFloat(style[key])||0);},0); }
+    var cancelStyle=getComputedStyle(cancel);context.font=cancelStyle.font||[cancelStyle.fontWeight,cancelStyle.fontSize,cancelStyle.fontFamily].join(' ');
+    var cancelWidth=context.measureText(cancel.textContent).width+horizontalSpace(cancelStyle);
+    var desired=Math.max(optionWidth+horizontalSpace(optionStyle),cancelWidth)+horizontalSpace(getComputedStyle(panel));
+    var limit=Math.min(innerWidth-40,560);
+    panel.style.width=Math.ceil(Math.min(limit,desired))+'px';
+    // A scrolling option list needs only its actual scrollbar allowance.
+    var scrollbar=choices.offsetWidth-choices.clientWidth;
+    if(scrollbar)panel.style.width=Math.ceil(Math.min(limit,desired+scrollbar))+'px';
     this.picker = {element:shade,select:select,root:previousRoot}; this.scope(shade); this.focus(choices.querySelector('button.active:not(:disabled)') || choices.querySelector('button:not(:disabled)') || cancel);
   };
   Navigation.prototype.closePicker = function () {
@@ -97,6 +107,38 @@
     if (!current) { this.focus(entries[0] && entries[0].element); return; }
     var cx = current.x, cy = current.y;
     var horizontal = direction === 'ArrowLeft' || direction === 'ArrowRight', positive = direction === 'ArrowRight' || direction === 'ArrowDown';
+    // Mixed cover heights share a grid row even when their visual centres differ.
+    // Layout offsets exclude the focused-card scale/translation animation.
+    var card = active.closest && active.closest('.poster-card'), catalog = card && card.closest('.catalog');
+    if (catalog) {
+      var cards = entries.filter(function (entry) { return entry.element.classList.contains('poster-card') && entry.element.closest('.catalog') === catalog; }).map(function (entry) { return entry.element; });
+      var rowTop = card.offsetTop, row = cards.filter(function (item) { return Math.abs(item.offsetTop-rowTop) < 2; }).sort(function (a,b) { return a.offsetLeft-b.offsetLeft; });
+      var posterTarget = null;
+      if (horizontal) posterTarget = row[row.indexOf(card)+(positive ? 1 : -1)];
+      else {
+        var rows = cards.map(function (item) { return item.offsetTop; }).filter(function (top) { return positive ? top > rowTop+1 : top < rowTop-1; });
+        if (rows.length) {
+          var nextTop = positive ? Math.min.apply(Math,rows) : Math.max.apply(Math,rows), centre = card.offsetLeft+card.offsetWidth/2;
+          posterTarget = cards.filter(function (item) { return Math.abs(item.offsetTop-nextTop) < 2; }).sort(function (a,b) { return Math.abs(a.offsetLeft+a.offsetWidth/2-centre)-Math.abs(b.offsetLeft+b.offsetWidth/2-centre); })[0];
+        }
+      }
+      if (posterTarget) {
+        this.focus(posterTarget);
+        this.metrics.lastMoveMs = Math.round((performance.now()-started)*100)/100;
+        this.metrics.maxMoveMs = Math.max(this.metrics.maxMoveMs,this.metrics.lastMoveMs); return;
+      }
+    }
+    var settings = active.closest && active.closest('#settings-page .settings-card');
+    if (settings && !horizontal) {
+      var fields = entries.filter(function (entry) { return settings.contains(entry.element); });
+      var fieldIndex = fields.findIndex(function (entry) { return entry.element === active; });
+      var field = fields[fieldIndex + (positive ? 1 : -1)];
+      if (field) {
+        this.focus(field.element);
+        this.metrics.lastMoveMs = Math.round((performance.now() - started) * 100) / 100;
+        this.metrics.maxMoveMs = Math.max(this.metrics.maxMoveMs, this.metrics.lastMoveMs); return;
+      }
+    }
     var playerRow=active.closest&&active.closest('#player-controls .transport-row');
     if(playerRow){
       var rowItems=entries.filter(function(entry){return playerRow.contains(entry.element);}).map(function(entry){return entry.element;});
@@ -146,6 +188,13 @@
     var textInput = active && (active.tagName === 'TEXTAREA' || (active.tagName === 'INPUT' && !/^(range|checkbox|radio|button|submit)$/i.test(active.type)));
     // Samsung's own IME owns text/composition keys. Never suppress its text editing.
     if (textInput && (event.isComposing || event.keyCode === 229)) return;
+    // Single-line Settings fields use vertical remote keys to leave the field.
+    // Keep caret/selection keys, modified arrows and active IME composition local.
+    if (textInput && active.tagName === 'INPUT' && active.closest('#settings-page') &&
+        (key === 'ArrowUp' || key === 'ArrowDown') &&
+        !event.altKey && !event.ctrlKey && !event.metaKey && !event.shiftKey) {
+      this.move(key); event.preventDefault(); return;
+    }
     if (textInput && (key === 'InputDone' || key === 'InputCancel' || key === 'Back' || key === 'Escape')) {
       var inputKey = key === 'InputDone' ? 'InputDone' : 'InputCancel';
       active.blur(); if (this.handler) this.handler(inputKey,event,active); return;

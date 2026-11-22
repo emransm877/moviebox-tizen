@@ -3,6 +3,12 @@
   'use strict';
   var metrics = {resized:0,blockedOversized:0,ignoredPlaceholders:0};
   function imageUrl(value) { if (typeof value !== 'string') return ''; value = value.trim(); if (/^data:image\//i.test(value)) return value; if (/^\/\//.test(value)) value = 'https:' + value; try { var parsed = new URL(value); return /^https?:$/.test(parsed.protocol) ? parsed.href : ''; } catch (_) { return ''; } }
+  function aspectRatio(subject, kind) {
+    var record = subject && subject[kind || 'cover'];
+    if (!record || typeof record !== 'object' || typeof record.width === 'boolean' || typeof record.height === 'boolean') return 0;
+    var width = Number(record.width), height = Number(record.height), ratio = width / height;
+    return width > 0 && height > 0 && isFinite(width) && isFinite(height) && ratio > 0 && isFinite(ratio) ? ratio : 0;
+  }
   function url(subject, kind, width) {
     var value = subject && subject[kind || 'cover'];
     if (!value) return '';
@@ -63,5 +69,5 @@
     }
     attach(data);return data;
   }
-  global.MovieBoxArtwork = {url:url,banner:banner,prepare:prepare,metrics:metrics,imageUrl:imageUrl};
+  global.MovieBoxArtwork = {url:url,banner:banner,prepare:prepare,metrics:metrics,imageUrl:imageUrl,aspectRatio:aspectRatio};
 })(window);

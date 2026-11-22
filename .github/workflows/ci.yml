@@ -15,6 +15,9 @@ jobs:
           python-version: '3.12'
       - run: node tests/api.test.cjs
       - run: node tests/releases.test.cjs
+      - run: node tests/artwork.test.cjs
+      - run: node --test tests/text.test.cjs
+      - run: node --test tests/quality.test.cjs
       - run: python -m pip install playwright
       - run: python tests/ui_acceptance.py
       - run: python tests/themes_acceptance.py
@@ -22,7 +25,16 @@ jobs:
       - run: python tests/player_acceptance.py
       - run: python tests/seek_lifecycle_acceptance.py
       - run: python tests/media_transport_acceptance.py
-      - run: python tools/package.py
+      - run: python tests/platform_capabilities_acceptance.py
+      - run: python tests/design_acceptance.py
+      - run: python tests/text_acceptance.py
+      - run: python tests/settings_player_alignment_acceptance.py
+      - run: python tests/dropdown_fit_acceptance.py
+      - run: python tests/more_focus_acceptance.py
+      - run: python tests/artwork_layout_acceptance.py
+      - run: python tests/catalogue_status_contrast_acceptance.py
+      - run: python -m unittest discover -s tests -p "test_*.py"
+      - run: python tools/build_bundle.py
       - uses: actions/upload-artifact@v4
         with:
           name: MovieBox-TV-unsigned-development-widget

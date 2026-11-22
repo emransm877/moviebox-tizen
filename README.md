@@ -11,9 +11,12 @@ Samsung AVPlay remains selectable for alternate formats and embedded audio track
 
 Source 0.9.3: HD promotional banners are matched to exact title IDs. Trailer
 frames and portrait covers are no longer used as hero banners. Artwork identity
-checks and the five-theme browser suite pass; installation of this revision on
-the physical TV is pending. The earlier 0.9.2 transport was tested on Samsung
-U8000F / Tizen 9. Requires Tizen 7+; other models remain unverified.
+checks and the five-theme browser suite pass. Source 0.9.3 was reinstalled and
+launched on the Samsung U8000F after its upgrade to Tizen 10. Actual HTML video
+playback, 1080p/480p selection, seeking and English/Bangla captions were checked.
+Earlier hardware checks cover Tizen 9. The minimum remains Tizen 7; other models
+and future firmware need their own validation. See
+[compatibility and update recovery](docs/COMPATIBILITY.md).
 See [hardware validation](docs/hardware-validation.md).
 
 ## Download and install
@@ -35,9 +38,13 @@ Android TV, webOS, Roku or Apple TV package.
 - Discover titles, live search suggestions, movie details and series episodes.
 - Separate Movies and TV Shows catalogues with live server pagination and combined
   year, genre, country, language/edition, sorting and minimum-rating filters.
+- Full-image artwork frames follow each cover's real proportions. Loading more
+  results retains the current section and moves focus to the new cards.
 - Native API BlurHash placeholders are distinguished from image URLs, so artwork
   renders in My list, search and detail pages without decoding enormous originals.
 - Arrows/OK/Return navigation, remote transport keys and remote-friendly option menus.
+- Content-sized option menus and a compact right-side episode drawer with
+  reduced-motion support.
 - Samsung's native on-screen keyboard through a focused HTML search input;
   Samsung IME Done/Cancel/composition keys are handled without swallowing text input.
 - Fullscreen AVPlay playback, seeking, automatically hidden controls, real source
@@ -53,18 +60,25 @@ availability belongs to the service. A missing source or subtitle cannot be
 created by changing a resolution label. Desktop downloads, local file import,
 and desktop QR account login are not included in this TV preview.
 
+Quality choices reflect the actual supplied file. A service request for 720p can
+return 480p; that fallback remains labelled 480p. Genuine available 720p files are
+retained. The app does not invent missing tiers or bypass restricted streams.
+
 ## Package
 
 Python 3.11+ can create the unsigned development widget without an npm toolchain:
 
 ```powershell
 python tools/package.py
+python tools/build_bundle.py
 ```
 
 The output is `dist/MovieBox-TV-0.9.3-unsigned.wgt` with a SHA-256 file. It is an
 unsigned build artifact, **not an installable signed release**. The package
 contains only the app's HTML/CSS/JavaScript and icons; it does not contain Python,
 an emulator, a browser engine, or the Android APK.
+`build_bundle.py` also creates the Windows installation bundle and checksums. It
+rejects a changed payload with an outdated reviewed helper digest or identity.
 
 ## Install on a Samsung TV
 

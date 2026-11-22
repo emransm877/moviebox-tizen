@@ -55,11 +55,25 @@ try:
   checks['tv_mp4_uses_html_transport_after_app_agent_setup']=True
   assert page.evaluate('MovieBoxTV.player.video.videoWidth')>0
   checks['actual_video_decodes_and_resumes_saved_position']=True
+  # HTML media events are queued; a late event must agree with the current element state.
+  race=page.evaluate("""()=>{const p=MovieBoxTV.player;p.pause();p.play();p.video.dispatchEvent(new Event('pause'));return {appPaused:p.paused,videoPaused:p.video.paused};}""")
+  assert race=={'appPaused':False,'videoPaused':False},race
+  assert page.locator('#play-pause').get_attribute('aria-label')=='Pause'
+  checks['stale_html_pause_event_does_not_overwrite_immediate_resume']=True
+  race=page.evaluate("""()=>{const p=MovieBoxTV.player;p.pause();p.video.dispatchEvent(new Event('playing'));return {appPaused:p.paused,videoPaused:p.video.paused};}""")
+  assert race=={'appPaused':True,'videoPaused':True},race
+  assert page.locator('#play-pause').get_attribute('aria-label')=='Play'
+  checks['stale_html_playing_event_does_not_overwrite_explicit_pause']=True
+  page.evaluate('MovieBoxTV.player.play()')
+  page.wait_for_function('!MovieBoxTV.player.paused && !MovieBoxTV.player.video.paused')
+  position=page.evaluate('MovieBoxTV.player.video.currentTime')
+  page.wait_for_function('(position)=>MovieBoxTV.player.video.currentTime>position+.2',arg=position)
+  checks['real_decoded_video_advances_after_stale_event_sequence']=True
   for target in [10000,30000,15000]:
    page.evaluate('(target)=>MovieBoxTV.player.seek(target,true)',target)
    page.wait_for_function('(target)=>!MovieBoxTV.player.seekInFlight && Math.abs(MovieBoxTV.player.position-target)<1800',arg=target)
-   before=page.evaluate('MovieBoxTV.player.position');page.wait_for_timeout(500)
-   assert page.evaluate('MovieBoxTV.player.position')>before
+   before=page.evaluate('MovieBoxTV.player.position')
+   page.wait_for_function('(before)=>MovieBoxTV.player.position>before',arg=before,timeout=7000)
   checks['repeated_html_seeks_finish_and_playback_keeps_advancing']=True
   page.evaluate('MovieBoxTV.player.seek(19000,true);MovieBoxTV.player.video.pause()')
   page.wait_for_function('!MovieBoxTV.player.seekInFlight && !MovieBoxTV.player.video.paused && MovieBoxTV.player.position>=19000')
@@ -102,5 +116,5 @@ try:
   assert not errors,errors;checks['no_runtime_exceptions']=True
   browser.close()
 finally:
- server.shutdown();result={'scope':'Real HTML video decoding/seeks in Edge, mocked Samsung agent setup and controlled network failures; separate TV evidence required.','checks':checks,'passed':len(checks)==13 and all(checks.values()) and not errors}
+ server.shutdown();result={'scope':'Real HTML video decoding/seeks in Edge, mocked Samsung agent setup and controlled network failures; separate TV evidence required.','checks':checks,'passed':len(checks)==16 and all(checks.values()) and not errors}
  (OUT/'result.json').write_text(json.dumps(result,indent=2),encoding='utf-8');print(json.dumps(result,indent=2))
