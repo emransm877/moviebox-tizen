@@ -76,7 +76,7 @@ $sdb = Join-Path $SdkRoot 'tools\sdb.exe'
 $tizen = Join-Path $SdkRoot 'tools\ide\bin\tizen.bat'
 if (-not (Test-Path -LiteralPath $sdb) -or -not (Test-Path -LiteralPath $tizen)) { throw 'SDK tools are missing. Check -SdkRoot.' }
 if (-not (Test-Path -LiteralPath $WidgetPath)) { throw 'Place the unsigned MovieBox WGT beside this script, or pass -WidgetPath.' }
-$expectedHash = 'c3616fdcde91adb394d0458969996f4b1341a07775214c30cc8144a185965d03'
+$expectedHash = 'c1f59b2247154e68a18601a365d5a3ac55f79c08f58d0d73c5031bf8ffa4e6d6'
 if ((Get-FileHash -LiteralPath $WidgetPath -Algorithm SHA256).Hash.ToLowerInvariant() -ne $expectedHash) { throw 'The widget does not match the reviewed 0.9.3 build. Use the matching installation bundle.' }
 $tempBase = [IO.Path]::GetFullPath([IO.Path]::GetTempPath()).TrimEnd('\') + '\'
 $workDirectory = Join-Path $tempBase ('MovieBoxTV-' + [Guid]::NewGuid().ToString('N'))

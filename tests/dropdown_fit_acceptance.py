@@ -122,11 +122,11 @@ def run(out):
                     drawer = page.locator('#episode-drawer').evaluate('''element=>{
                       const r=element.getBoundingClientRect(),s=getComputedStyle(element),select=element.querySelector('select');
                       return {width:r.width,right:r.right,animation:s.animationName,filter:s.filter,backdrop:s.backdropFilter,
-                        selected:element.querySelector('.player-episode-list button.active')?.textContent,
+                        selected:element.querySelector('.player-episode-list button.active .episode-row-label')?.textContent,
                         seasonWidth:select.getBoundingClientRect().width};
                     }''')
-                    assert drawer['width'] == (520 if width > 1400 else 480), drawer
-                    assert drawer['right'] == width and drawer['animation'] == 'none', drawer
+                    assert 320 <= drawer['width'] <= 430, drawer
+                    assert 20 <= width-drawer['right'] <= 40 and drawer['animation'] == 'none', drawer
                     assert drawer['filter'] == 'none' and drawer['backdrop'] == 'none', drawer
                     assert drawer['selected'] == 'Episode 1' and drawer['seasonWidth'] < 180, drawer
                     page.screenshot(path=str(out/f'{width}-{theme}-drawer.png'))

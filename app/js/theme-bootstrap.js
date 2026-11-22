@@ -1,9 +1,5 @@
-/* Runs before stylesheets and the first app paint. No network or user data leaves the TV. */
-(function(){
-  'use strict';
-  var colors={obsidian:'#0b1016',orbital:'#070f20',prism:'#100c20',aurora:'#edf3f0',eclipse:'#100e0b'},theme='';
-  try{theme=localStorage.getItem('moviebox-tv-theme')||'';if(!Object.prototype.hasOwnProperty.call(colors,theme)){['moviebox-tv-library','moviebox-tv-library-backup'].some(function(key){try{var library=JSON.parse(localStorage.getItem(key)||'null'),value=library&&library.settings&&library.settings.theme;if(Object.prototype.hasOwnProperty.call(colors,value)){theme=value;return true;}}catch(_){}return false;});}}catch(_){}
-  if(!Object.prototype.hasOwnProperty.call(colors,theme))theme='obsidian';
-  document.documentElement.dataset.theme=theme;document.documentElement.style.backgroundColor=colors[theme];
-  window.MovieBoxInitialTheme=theme;
+/* Apply saved palette before stylesheets and first paint; no network. */
+(function(){'use strict';var registry={},themes=(window.MovieBoxThemeSpec||{}).themes||[],theme='';themes.forEach(function(t){registry[t.id]=t;});
+try{theme=localStorage.getItem('moviebox-tv-theme')||'';if(!registry[theme])['moviebox-tv-library','moviebox-tv-library-backup'].some(function(key){try{var value=JSON.parse(localStorage.getItem(key)||'null'),id=value&&value.settings&&value.settings.theme;if(registry[id]){theme=id;return true;}}catch(_){}return false;});}catch(_){}
+if(!registry[theme])theme='obsidian';var p=registry[theme].palette,node=document.documentElement;node.dataset.theme=theme;node.dataset.layout='sidebar';node.style.backgroundColor=p.base;node.style.colorScheme=p.dark?'dark':'light';var tokens={'--bg':'base','--panel':'panel','--surface':'surface','--text':'text','--muted':'secondary','--accent':'accent','--accent-ink':'ink','--line':'line','--hover':'hover','--selected':'select','--hero-shade':'hero'};Object.keys(tokens).forEach(function(k){node.style.setProperty(k,p[tokens[k]]);});window.MovieBoxInitialTheme=theme;
 })();

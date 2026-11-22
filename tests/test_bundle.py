@@ -23,7 +23,11 @@ class BundleTests(unittest.TestCase):
             result = build_bundle(folder)
             with zipfile.ZipFile(result['path']) as archive:
                 names = archive.namelist()
-                self.assertEqual(len(names), 7)
+                self.assertEqual(len(names), 9)
+                self.assertIn('README.md', names)
+                self.assertIn('RELEASE-NOTES.md', names)
+                self.assertIn(result['version'], archive.read('README.md').decode('utf-8'))
+                self.assertIn(result['version'], archive.read('RELEASE-NOTES.md').decode('utf-8'))
                 self.assertIn('Install-MovieBoxTV.cmd', names)
                 widget_name = f"MovieBox-TV-{result['version']}-unsigned.wgt"
                 self.assertEqual(hashlib.sha256(archive.read(widget_name)).hexdigest(), result['widget_sha256'])

@@ -8,7 +8,7 @@ from ui_acceptance import STUB,QuietHandler,ROOT
 OUT=ROOT/'verification/themes-v050';OUT.mkdir(parents=True,exist_ok=True)
 server=ThreadingHTTPServer(('127.0.0.1',0),partial(QuietHandler,directory=str(ROOT/'app')))
 threading.Thread(target=server.serve_forever,daemon=True).start()
-checks={};errors=[]
+checks={};errors=[];succeeded=False
 try:
   with sync_playwright() as pw:
     browser=pw.chromium.launch(channel='msedge',headless=True)
@@ -17,10 +17,10 @@ try:
     page.route('**/js/api.js',lambda r:r.fulfill(content_type='text/javascript',body=STUB))
     page.route('**/$WEBAPIS/**',lambda r:r.fulfill(content_type='text/javascript',body=''))
     page.route('https://api.github.com/**',lambda r:r.fulfill(content_type='application/json',body='{}'))
-    page.goto(f'http://127.0.0.1:{server.server_port}/');page.locator('#hero-next').wait_for()
+    page.goto(f'http://127.0.0.1:{server.server_port}/');page.locator('.hero-poster[data-active=true]').wait_for()
     # Remove asynchronous test-fixture paging noise before asserting active slides.
     page.evaluate('MovieBoxTV.carousel.loaded=true')
-    for theme in ('obsidian','orbital','prism','aurora','eclipse'):
+    for theme in page.evaluate('MovieBoxThemeSpec.themes.map(t=>t.id)'):
       page.locator('[data-nav=settings]').click()
       page.locator('#preferred-theme').focus();page.keyboard.press('Enter')
       page.locator(f'.remote-picker button[data-value={theme}]').focus();page.keyboard.press('Enter')
@@ -28,25 +28,16 @@ try:
       page.wait_for_function("document.querySelector('.brand img').complete && document.querySelector('.brand img').naturalWidth>0")
       assert page.locator('.brand img').get_attribute('src')=='assets/moviebox-logo-'+theme+'.svg'
       assert page.evaluate("JSON.parse(localStorage.getItem('moviebox-tv-library')).settings.theme")==theme
-      page.locator('[data-nav=home]').click();page.locator('#hero-watch').wait_for()
+      page.locator('[data-nav=home]').click();page.locator('.hero-poster[data-active=true]').wait_for()
       assert page.evaluate("document.querySelector('.sidebar').scrollWidth<=document.querySelector('.sidebar').clientWidth")
-      if theme in ('orbital','aurora','eclipse'):
-        page.locator('[data-nav=home]').focus();page.keyboard.press('ArrowDown')
-        assert page.evaluate("!!document.activeElement.closest('#main-content')")
-        page.locator('#hero-watch').focus()
-        for _ in range(3):
-          page.keyboard.press('ArrowUp')
-          if page.evaluate("!!document.activeElement.closest('.sidebar')"): break
-        assert page.evaluate("!!document.activeElement.closest('.sidebar')"),page.evaluate("({focus:document.activeElement.outerHTML,scroll:document.getElementById('main-content').scrollTop,header:document.querySelector('.sidebar').getBoundingClientRect().toJSON(),root:MovieBoxTV.navigation.root.id})")
-      else:
-        page.locator('[data-nav=home]').focus();page.keyboard.press('ArrowDown')
-        assert page.evaluate('document.activeElement.dataset.nav')=='movies'
+      page.locator('[data-nav=home]').focus();page.keyboard.press('ArrowDown')
+      assert page.evaluate('document.activeElement.dataset.nav')=='movies'
       page.screenshot(path=str(OUT/(theme+'.png')))
       checks[theme+'_remote_settings_and_navigation']=True
-    page.reload();page.locator('#hero-watch').wait_for()
-    assert page.evaluate('document.documentElement.dataset.theme')=='eclipse'
+    page.reload();page.locator('.hero-poster[data-active=true]').wait_for()
+    assert page.evaluate('document.documentElement.dataset.theme')=='grand-stage'
     checks['theme_persists_across_page_relaunch']=True
-    checks['all_five_vector_logos_load_and_follow_theme']=True
+    checks['all_twenty_vector_logos_load_and_follow_theme']=True
     # Exercise a full bounded mixed latest feed, without downloading 100 posters.
     result=page.evaluate('''async()=>{
       var app=MovieBoxTV,c=app.carousel;c.loaded=false;c.loading=false;var calls=[];
@@ -54,29 +45,29 @@ try:
       return {total:c.items.length,movies:c.items.filter(x=>x.subjectType===1).length,tv:c.items.filter(x=>x.subjectType===2).length,calls:calls.length,latest:calls.every(x=>x.filters.sort==='Latest')};
     }''')
     assert result=={'total':100,'movies':50,'tv':50,'calls':6,'latest':True},result
-    checks['hundred_unique_shuffled_latest_movies_and_tv_metadata_only']=True
-    page.locator('#hero-next').click();active=page.evaluate('MovieBoxTV.carousel.current().subjectId')
-    page.locator('#hero-info').click();page.wait_for_function('!document.getElementById("watch-button").disabled')
+    checks['hundred_unique_latest_movies_and_tv_metadata_only']=True
+    page.locator('.hero-poster[data-active=true]').focus();page.keyboard.press('ArrowRight');active=page.evaluate('MovieBoxTV.carousel.current().subjectId')
+    page.locator('.hero-poster[data-active=true]').click();page.wait_for_function('!document.getElementById("watch-button").disabled')
     assert page.evaluate('MovieBoxTV.player.active') is False
     assert page.locator('#detail-title').inner_text()==page.evaluate('MovieBoxTV.carousel.current().title')
     checks['more_info_targets_active_slide_without_starting_video']=True
-    page.locator('#detail-back').click();page.locator('#hero-next').click()
+    page.locator('#detail-back').click();page.locator('.hero-poster[data-active=true]').focus();page.keyboard.press('ArrowRight')
     active=page.evaluate('MovieBoxTV.carousel.current().subjectId')
-    page.locator('#hero-watch').click();page.wait_for_function('MovieBoxTV.player.active')
+    page.locator('.hero-poster[data-active=true]').click();page.wait_for_function('!document.getElementById("watch-button").disabled');page.locator('#watch-button').click();page.wait_for_function('MovieBoxTV.player.active')
     assert page.evaluate('MovieBoxTV.player.subject.subjectId')==active
     checks['watch_starts_exact_active_slide']=True
     baseline=page.evaluate("__avcalls.filter(x=>x[0]==='open'||x[0]==='close').length")
-    for theme in ('obsidian','orbital','prism','aurora','eclipse'):
+    for theme in page.evaluate('MovieBoxThemeSpec.themes.map(t=>t.id)'):
       page.evaluate('(t)=>MovieBoxThemes.apply(t)',theme)
       assert page.evaluate('MovieBoxTV.player.active')
       assert page.evaluate("getComputedStyle(document.getElementById('player-page')).color")=='rgb(242, 246, 250)'
     assert page.evaluate("__avcalls.filter(x=>x[0]==='open'||x[0]==='close').length")==baseline
     checks['all_themes_preserve_native_source_and_player_contrast']=True
     page.locator('#player-back').click();page.locator('#detail-back').click()
-    page.locator('#hero-pause').click();old=page.evaluate('MovieBoxTV.carousel.current().subjectId')
+    page.evaluate('MovieBoxTV.carousel.pause(true)');old=page.evaluate('MovieBoxTV.carousel.current().subjectId')
     page.evaluate('if (!MovieBoxTV.carousel.paused) throw new Error("not paused");')
-    page.locator('#hero-watch').focus()
-    assert page.evaluate('MovieBoxTV.carousel.options.canRotate()') is False
+    page.locator('.hero-poster[data-active=true]').focus()
+    assert page.evaluate('MovieBoxTV.carousel.options.canRotate()') is True
     page.evaluate("MovieBoxTV.carousel.set([{subjectId:'replacement',subjectType:1,title:'Replacement'}])")
     assert page.evaluate('MovieBoxTV.carousel.current().subjectId')==old
     checks['focused_slide_not_replaced_and_rotation_can_pause']=True
@@ -92,9 +83,10 @@ try:
     checks['landscape_detail_artwork_is_contained_without_stretching']=True
     assert not errors,errors
     checks['no_javascript_exceptions']=True
+    succeeded=True
     browser.close()
 finally:
   server.shutdown()
-  result={'scope':'Headless Edge, fixture service, mocked AVPlay; not hardware playback proof.','checks':checks,'passed':not errors and len(checks)>=13}
+  result={'scope':'Headless Edge, fixture service, mocked AVPlay; not hardware playback proof.','checks':checks,'passed':succeeded and not errors and len(checks)>=13}
   (OUT/'result.json').write_text(json.dumps(result,indent=2),encoding='utf-8')
   print(json.dumps(result,indent=2))

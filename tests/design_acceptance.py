@@ -8,7 +8,7 @@ from ui_acceptance import ROOT, STUB, QuietHandler
 
 OUT = ROOT / 'verification' / 'design'
 OUT.mkdir(parents=True, exist_ok=True)
-LABELS = ['Discover', 'Movies', 'TV Shows', 'Search', 'Continue watching', 'My list', 'Settings']
+LABELS = ['Discover', 'Movies', 'TV Shows', 'Search', 'History', 'My list', 'Settings']
 
 
 def run():
@@ -83,6 +83,31 @@ def run():
                     rect = page.locator(selector).bounding_box()
                     assert rect and rect['x'] >= 0 and rect['x'] + rect['width'] <= width
                 checks[f'{width}_episode_drawer_inside_viewport'] = True
+                for theme in ('obsidian','orbital','prism','aurora','eclipse'):
+                    page.evaluate('t=>MovieBoxThemes.apply(t)',theme)
+                    drawer=page.locator('#episode-drawer').bounding_box()
+                    assert drawer['x']>=20 and drawer['y']>=20
+                    assert drawer['x']+drawer['width']<=width-20 and drawer['y']+drawer['height']<=height-20
+                    assert page.locator('#player-episode-list').evaluate('e=>e.scrollHeight>e.clientHeight')
+                    assert page.locator('#episode-drawer header').evaluate('e=>{const r=e.getBoundingClientRect();return document.elementFromPoint(r.x+10,r.y+10).closest("#episode-drawer")!==null}')
+                    page.screenshot(path=str(OUT/f'{width}-{theme}-long-episode-drawer.png'))
+                page.locator('#player-season-select').select_option('2')
+                page.evaluate('()=>{const s=document.getElementById("player-season-select");s.selectedOptions[0].dataset.season=JSON.stringify({se:2,maxEp:6});s.onchange();}')
+                assert page.locator('#player-episode-list button').count()==6
+                short=page.locator('#episode-drawer').bounding_box()
+                bars=page.evaluate('({header:document.querySelector(".player-header").getBoundingClientRect().bottom,controls:document.getElementById("player-controls").getBoundingClientRect().top})')
+                assert abs(short['y']-(bars['header']+16))<2,(width,short,bars)
+                assert abs(short['y']+short['height']-(bars['controls']-16))<2,(width,short,bars)
+                assert 320<=short['width']<=420,(width,short)
+                assert page.locator('#player-episode-list button').first.evaluate('e=>parseFloat(getComputedStyle(e).fontSize)')>=20
+                assert page.locator('#player-episode-list').evaluate('e=>e.clientHeight>0&&e.scrollHeight>=e.clientHeight')
+                page.screenshot(path=str(OUT/f'{width}-compact-six-episode-drawer.png'))
+                checks[f'{width}_drawer_measured_tall_gap_long_internal_scroll_safe_header_all_themes']=True
+                page.mouse.click(20,height/2)
+                assert not page.locator('#episode-drawer').is_visible()
+                assert page.evaluate('nativeState')=='PLAYING'
+                checks[f'{width}_drawer_outside_pointer_dismiss_keeps_playing']=True
+                page.locator('#episode-browser').click()
                 page.locator('#episode-drawer-close').click()
                 page.locator('#player-back').click()
                 page.evaluate("movie.trailer={videoAddress:{url:'https://fixture.invalid/trailer.mp4',height:480,duration:100}};MovieBoxTV.openDetail(movie)")

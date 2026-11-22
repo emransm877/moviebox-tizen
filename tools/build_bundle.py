@@ -34,6 +34,8 @@ def build_bundle(output_directory=None):
         (ROOT / 'tools/Install-MovieBoxTV.ps1', 'Install-MovieBoxTV.ps1'),
         (ROOT / 'tools/Install-MovieBoxTV.cmd', 'Install-MovieBoxTV.cmd'),
         (ROOT / 'docs/INSTALL-TV.md', 'INSTALL-TV.md'),
+        (ROOT / 'docs/BUNDLE-README.md', 'README.md'),
+        (ROOT / 'docs/releases' / (version + '.md'), 'RELEASE-NOTES.md'),
         (ROOT / 'LICENSE', 'LICENSE'),
         (ROOT / 'THIRD_PARTY_NOTICES.md', 'THIRD_PARTY_NOTICES.md'),
     ]

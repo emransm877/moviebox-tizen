@@ -1,0 +1,333 @@
+{
+  "items": [
+    {
+      "banner": {
+        "banners": [
+          {
+            "subjectId": "0",
+            "subjectType": null,
+            "title": null,
+            "image": {
+              "url": "https://pbcdn.aoneroom.com/image/2026/11/19/dccdc705337fcb5328e1867f47c4d080.png",
+              "width": 1280,
+              "height": 720,
+              "thumbnail": "eFE2E}I]jI=^IVF3NbNHNHNH0Ns,%1I@%1nhkC-Vxa%1EMt5S4NHkA"
+            },
+            "subject": {
+              "subjectId": null,
+              "title": null,
+              "releaseDate": null,
+              "subjectType": null
+            }
+          },
+          {
+            "subjectId": "5705878031781299520",
+            "subjectType": null,
+            "title": null,
+            "image": {
+              "url": "https://pbcdn.aoneroom.com/image/2026/11/21/b485f2cecc813065e891829ea0d04cc5.webp",
+              "width": 3840,
+              "height": 2160,
+              "thumbnail": "eA9Z_$0KM}?GIp-=D%xat7RjoIM|t6bbWBozoLRjt7fkNJt6aef+jZ"
+            },
+            "subject": {
+              "subjectId": "5705878031781299520",
+              "title": "Percy Jackson et Les Olympiens [Version fran\u00e7aise]",
+              "releaseDate": "2023",
+              "subjectType": 2
+            }
+          },
+          {
+            "subjectId": "3486534283613956736",
+            "subjectType": null,
+            "title": null,
+            "image": {
+              "url": "https://pbcdn.aoneroom.com/image/2026/11/21/02c91c6328a74bc17806277c419385db.webp",
+              "width": 1280,
+              "height": 720,
+              "thumbnail": "eCCPYlW9QR$_ksIlIoNgo#xV9DWA%gt9M{-WR%xBofIoIpS3R:NFxB"
+            },
+            "subject": {
+              "subjectId": "3486534283613956736",
+              "title": "Steps [Version fran\u00e7aise]",
+              "releaseDate": "2026",
+              "subjectType": 1
+            }
+          },
+          {
+            "subjectId": "7196657400651607936",
+            "subjectType": null,
+            "title": null,
+            "image": {
+              "url": "https://pbcdn.aoneroom.com/image/2026/11/11/7160f6affb73459cb45da227431d8b04.webp",
+              "width": 3840,
+              "height": 2160,
+              "thumbnail": "eLJ#ro5pwL^MIr|w}VNuE6n%RR=cR,NbNKxXo2oekSS4r[xEW:V^s."
+            },
+            "subject": {
+              "subjectId": "7196657400651607936",
+              "title": "The Lord of the Rings: The Rings of Power [Version fran\u00e7aise]",
+              "releaseDate": "2024",
+              "subjectType": 2
+            }
+          },
+          {
+            "subjectId": "4102265811690216352",
+            "subjectType": null,
+            "title": null,
+            "image": {
+              "url": "https://pbcdn.aoneroom.com/image/2026/11/03/7c99b1154a7b554608d859d477a7d823.webp",
+              "width": 3840,
+              "height": 2160,
+              "thumbnail": "eOCFL^}@$*NaS1S}XRbbofWDNaS2RjNGWBwcsms:ofs:XSX8kCs:af"
+            },
+            "subject": {
+              "subjectId": "4102265811690216352",
+              "title": "The Remarried Empress [Version fran\u00e7aise]",
+              "releaseDate": "2026",
+              "subjectType": 2
+            }
+          },
+          {
+            "subjectId": "5249994765260702904",
+            "subjectType": null,
+            "title": null,
+            "image": {
+              "url": "https://pbcdn.aoneroom.com/image/2026/11/07/482ca0828bc73d534f00785e5722c499.webp",
+              "width": 3840,
+              "height": 2160,
+              "thumbnail": "eMAb;90~-9WoIq$%NHj[xFNHWVaeS4$%Nbo2j@R+s.S4WXt6R*jZoe"
+            },
+            "subject": {
+              "subjectId": "5249994765260702904",
+              "title": "The Odyssey [Version fran\u00e7aise]",
+              "releaseDate": "2026",
+              "subjectType": 1
+            }
+          },
+          {
+            "subjectId": "5592056620823084240",
+            "subjectType": null,
+            "title": null,
+            "image": {
+              "url": "https://pbcdn.aoneroom.com/image/2026/11/06/474046869c041695211ed64f079d75ca.webp",
+              "width": 3840,
+              "height": 2160,
+              "thumbnail": "eRDl+Z~n%L%0-U_2-:ozofs:xZxaj[R+NHj]s:ofWCRkWYWXj[kBbI"
+            },
+            "subject": {
+              "subjectId": "5592056620823084240",
+              "title": "Heart of the Beast [Version fran\u00e7aise]",
+              "releaseDate": "2026",
+              "subjectType": 1
+            }
+          },
+          {
+            "subjectId": "4013029447980015128",
+            "subjectType": null,
+            "title": null,
+            "image": {
+              "url": "https://pbcdn.aoneroom.com/image/2026/11/06/4798c685b557892f127f554e2ec6fe78.webp",
+              "width": 3840,
+              "height": 2160,
+              "thumbnail": "eUHU;5_4XRn$V[_3Rojrt6kCKPNZr=f6flF{OXofnkaLt7t6ocbEa}"
+            },
+            "subject": {
+              "subjectId": "4013029447980015128",
+              "title": "Campus Drivers [Version fran\u00e7aise]",
+              "releaseDate": "2026",
+              "subjectType": 2
+            }
+          },
+          {
+            "subjectId": "3608029287690951584",
+            "subjectType": null,
+            "title": null,
+            "image": {
+              "url": "https://pbcdn.aoneroom.com/image/2026/11/04/c95b66fa2955ee37326e7a06684f81e5.jpg",
+              "width": 1920,
+              "height": 1080,
+              "thumbnail": "eAEK4TNwvN;M;M}t[W+vRQ#SJnn4bvr?M|%LI:X9$%RjNIWB-Uw|Rl"
+            },
+            "subject": {
+              "subjectId": "3608029287690951584",
+              "title": "The Mongoose [Version fran\u00e7aise]",
+              "releaseDate": "2026",
+              "subjectType": 1
+            }
+          },
+          {
+            "subjectId": "575960720936944408",
+            "subjectType": null,
+            "title": null,
+            "image": {
+              "url": "https://pbcdn.aoneroom.com/image/2026/10/30/80b89e21d48c6f5b123c6b0e8ca9f330.webp",
+              "width": 1280,
+              "height": 720,
+              "thumbnail": "eD9*6?^sDkEUR*%}xBZ~S%bG0VD;xT%IofD;N2obxUX9xUtPWYRQbJ"
+            },
+            "subject": {
+              "subjectId": "575960720936944408",
+              "title": "Dead-End Job [Version fran\u00e7aise]",
+              "releaseDate": "2026",
+              "subjectType": 2
+            }
+          },
+          {
+            "subjectId": "2785747290697466960",
+            "subjectType": null,
+            "title": null,
+            "image": {
+              "url": "https://pbcdn.aoneroom.com/image/2026/11/03/86187aaf134150bb5340618fd4eef51c.jpeg",
+              "width": 1368,
+              "height": 768,
+              "thumbnail": "e67UVMH[bq%MDj_LDjW,-;ICXM8{WT-;RR%MRka_jsM|-;x]a#RPWn"
+            },
+            "subject": {
+              "subjectId": "2785747290697466960",
+              "title": "Black Clover [Version fran\u00e7aise]",
+              "releaseDate": "2017",
+              "subjectType": 2
+            }
+          },
+          {
+            "subjectId": "838601903666779168",
+            "subjectType": null,
+            "title": null,
+            "image": {
+              "url": "https://pbcdn.aoneroom.com/image/2026/10/23/2e1b04fbe43936ae68a808137d5f5403.webp",
+              "width": 1920,
+              "height": 1080,
+              "thumbnail": "eOFZQt-=t7t-4nxvMdRPo~Rj0KNIRPe-%MyYcEofnga0NdNGWBoIjE"
+            },
+            "subject": {
+              "subjectId": "838601903666779168",
+              "title": "Lupin",
+              "releaseDate": "2021",
+              "subjectType": 2
+            }
+          },
+          {
+            "subjectId": "8851403193360810128",
+            "subjectType": null,
+            "title": null,
+            "image": {
+              "url": "https://pbcdn.aoneroom.com/image/2026/10/21/6f5746475c9d3bb4c3d3d17be90cf807.webp",
+              "width": 1920,
+              "height": 1080,
+              "thumbnail": "eHGl6ExZE2NIWV~p0Lt7-:M|%LWBxtR*RkxtxtW;IV%LIpWBxaWBof"
+            },
+            "subject": {
+              "subjectId": "8851403193360810128",
+              "title": "The Terminal List [Version fran\u00e7aise]",
+              "releaseDate": "2022",
+              "subjectType": 2
+            }
+          },
+          {
+            "subjectId": "2615534764639535304",
+            "subjectType": null,
+            "title": null,
+            "image": {
+              "url": "https://pbcdn.aoneroom.com/image/2026/10/16/dfa35de28c9fdb116a7b687bd1897dbf.png",
+              "width": 1672,
+              "height": 941,
+              "thumbnail": "eIF5?R%Le-D*9Fu6kBWBWARP4nRjWCxutRxZs,s:kCbI.9R%oJWCsm"
+            },
+            "subject": {
+              "subjectId": "2615534764639535304",
+              "title": "Tulsa King [Version fran\u00e7aise]",
+              "releaseDate": "2022",
+              "subjectType": 2
+            }
+          },
+          {
+            "subjectId": "6072763552773931672",
+            "subjectType": null,
+            "title": null,
+            "image": {
+              "url": "https://pbcdn.aoneroom.com/image/2026/10/27/7e478db4b6aa7d24dd94c10f3b2d7e8f.jpg",
+              "width": 1280,
+              "height": 720,
+              "thumbnail": "eFAmoQDh4m%Nj]t8WBWAxbRiRjoft7Rjt6t7ayWBj[ayoyWBWBt7WB"
+            },
+            "subject": {
+              "subjectId": "6072763552773931672",
+              "title": "Tokyo Revengers [Version fran\u00e7aise]",
+              "releaseDate": "2021",
+              "subjectType": 2
+            }
+          },
+          {
+            "subjectId": "0",
+            "subjectType": null,
+            "title": null,
+            "image": {
+              "url": "https://pbcdn.aoneroom.com/image/2026/10/16/aee2b3dfa21bee0a91e6c5adc856cbd5.png",
+              "width": 1671,
+              "height": 941,
+              "thumbnail": "eGDm]U,-0ok8t+IdI]tdXBEN6:Vt=pxCrDWUVtEMVa--5Ta2-PkDf+"
+            },
+            "subject": {
+              "subjectId": null,
+              "title": null,
+              "releaseDate": null,
+              "subjectType": null
+            }
+          },
+          {
+            "subjectId": "5515429592825319400",
+            "subjectType": null,
+            "title": null,
+            "image": {
+              "url": "https://pbcdn.aoneroom.com/image/2026/09/18/4868cb0bf5fd13eb74bb208b7b762c32.webp",
+              "width": 3840,
+              "height": 2160,
+              "thumbnail": "e56*ByvhMxXlJ*~qM{M{xuR*GZ5kRj-CwJkqR*Rit7s:^6,aV@OqS#"
+            },
+            "subject": {
+              "subjectId": "5515429592825319400",
+              "title": "MobLand [Version fran\u00e7aise]",
+              "releaseDate": "2025",
+              "subjectType": 2
+            }
+          },
+          {
+            "subjectId": "1175687487176460592",
+            "subjectType": null,
+            "title": null,
+            "image": {
+              "url": "https://pbcdn.aoneroom.com/image/2026/05/07/4c632d32982e570d79e04116a18ca0a4.jpg",
+              "width": 528,
+              "height": 360,
+              "thumbnail": "eWOzGLGb?v^Nw~S^Nx$*xDog?^#%Q.OGS1^-wuNZS#nOnmbJR*WUn%"
+            },
+            "subject": {
+              "subjectId": null,
+              "title": null,
+              "releaseDate": null,
+              "subjectType": null
+            }
+          },
+          {
+            "subjectId": "20260717001",
+            "subjectType": null,
+            "title": null,
+            "image": {
+              "url": "https://pbcdn.aoneroom.com/image/2026/10/22/88fa4deebeed40f9e3bc349f0f737d12.jpg",
+              "width": 1920,
+              "height": 1080,
+              "thumbnail": "eECPY6Elxu-o4oX9oJR-%2s.0M%1R+Rj-o${R.xtM|WY9ZV[R*j[%L"
+            },
+            "subject": {
+              "subjectId": null,
+              "title": null,
+              "releaseDate": null,
+              "subjectType": null
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

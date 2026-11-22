@@ -4,7 +4,8 @@ vm.runInContext(fs.readFileSync(require('node:path').join(__dirname,'../app/js/a
 const banner=context.window.MovieBoxArtwork.banner;
 assert.equal(banner({trailer:{cover:{url:'https://example.com/frame',width:1920,height:1080}}}),'');
 assert.equal(banner({cover:{url:'https://example.com/poster',width:1920,height:1080}}),'');
-assert.equal(banner({stills:{url:'https://example.com/tiny',width:854,height:480}}),'');
+assert.equal(banner({stills:{url:'https://example.com/tiny',width:320,height:180}}),'');
+assert.equal(banner({stills:{url:'https://example.com/campus',width:920,height:518}}),'https://example.com/campus');
 assert.equal(banner({subjectId:'one',stills:{url:'https://example.com/wrong',width:1920,height:1080,subjectId:'two'}}),'');
 assert.equal(banner({stills:{url:'https://example.com/real',thumbnail:'https://example.com/tiny',width:1920,height:1080}}),'https://example.com/real');
 const title={subjectId:'542588344010695272',title:'Murder in Galicia',releaseDate:'2026-11-13',subjectType:2};
@@ -51,3 +52,22 @@ assert.equal(artwork.aspectRatio({banner:{width:1920,height:1080}}),0);
 for(const dimensions of [{width:0,height:100},{width:100,height:0},{width:-1,height:100},{width:Infinity,height:100},{width:100,height:NaN},{width:true,height:100},{width:100,height:false}])assert.equal(artwork.aspectRatio({cover:dimensions}),0);
 for(const item of observedSearch){const before=JSON.stringify(item);artwork.aspectRatio(item);assert.equal(JSON.stringify(item),before);}
 console.log('Wide, square and tall artwork reserve their own finite source aspect without changing metadata or inventing dimensions.');
+
+const nativeIndex={};
+const native=prepare({items:[{banner:{banners:[{subjectId:'native-one',subject:{subjectId:'native-one',subjectType:2,title:'Owned native title',releaseDate:'2026-01-01'},image:{url:'https://example.test/native-wide',width:920,height:518}},{subjectId:0,subjectType:2,subject:{subjectId:0,subjectType:2,title:'Promo',releaseDate:'2026-01-01'},image:{url:'https://example.test/promo',width:1920,height:1080}}]}}]},nativeIndex);
+assert.equal(banner(native.items[0].banner.banners[0].subject),'https://example.test/native-wide');assert.equal(nativeIndex['0'],undefined);
+assert.equal(banner(prepare({subjectId:'native-one',subjectType:2,title:'Wrong title',releaseDate:'2026-01-01'},nativeIndex)),'');
+const ownCover={subjectId:'datang-own',title:'Datang Akan Pergi',cover:{url:'https://example.test/own-cover',width:3276,height:4096}};
+assert.equal(artwork.hero(ownCover).kind,'cover');assert.equal(artwork.hero(ownCover).url,''); // unknown CDN oversized original is still protected
+assert.equal(artwork.hero({...ownCover,cover:{...ownCover.cover,url:'https://pbcdn.aoneroom.com/image/own-cover.jpg'}}).kind,'cover');
+assert.ok(artwork.hero({...ownCover,cover:{...ownCover.cover,url:'https://pbcdn.aoneroom.com/image/own-cover.jpg'}}).url.includes('/image/own-cover.jpg'));
+assert.equal(artwork.hero({stills:{url:'https://example.test/wide',width:920,height:518}}).kind,'banner');
+console.log('Native banner path, promotional id zero exclusion and distinct own-cover fallback preserve subject identity.');
+
+// Captured original-native banner schema, 2026-11-22. Public metadata only.
+const observedNative=JSON.parse(fs.readFileSync(require('node:path').join(__dirname,'fixtures/native-banners.json'),'utf8')),observedIndex={};
+prepare(observedNative,observedIndex);
+const nativeRows=observedNative.items.flatMap(s=>s.banner.banners);
+for(const row of nativeRows){if(row.subjectId==='0'||!row.subject.title||!row.subject.releaseDate){assert.equal(observedIndex[row.subjectId],undefined);continue;}assert.ok(banner(row.subject),row.subject.title);const later=prepare({...row.subject},observedIndex);assert.ok(banner(later));const {banner:attached,...identity}=row.subject;assert.ok(banner(prepare({...identity,releaseDate:String(identity.releaseDate).slice(0,4)+'-05-14'},observedIndex)));assert.equal(banner(prepare({...identity,releaseDate:'2026-99-99'},observedIndex)),'');for(const change of [{title:row.subject.title+' other'},{subjectType:3},{releaseDate:'1900'},{subjectId:'wrong-id'}])assert.equal(banner(prepare({...identity,...change},observedIndex)),'');}
+assert.ok(Object.keys(observedIndex).length>=15);
+console.log('Actual native feed banners join absent outer type using exact nested identity; wrong title/date/type/id and promos never join.');

@@ -193,7 +193,7 @@
     if (textInput && active.tagName === 'INPUT' && active.closest('#settings-page') &&
         (key === 'ArrowUp' || key === 'ArrowDown') &&
         !event.altKey && !event.ctrlKey && !event.metaKey && !event.shiftKey) {
-      this.move(key); event.preventDefault(); return;
+      if (!(this.handler && this.handler(key,event))) this.move(key); event.preventDefault(); return;
     }
     if (textInput && (key === 'InputDone' || key === 'InputCancel' || key === 'Back' || key === 'Escape')) {
       var inputKey = key === 'InputDone' ? 'InputDone' : 'InputCancel';

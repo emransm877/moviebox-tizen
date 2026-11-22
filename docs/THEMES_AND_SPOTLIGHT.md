@@ -1,19 +1,50 @@
-# Themes and latest-title spotlight
+# Themes and poster browsing
 
-Choose **Settings → MovieBox theme**. The five implemented themes adapt the generated concepts to the native Qt and TV interfaces; actual catalogue artwork replaces fictional preview artwork. All existing application actions remain available in every theme. Changes apply immediately and persist per device.
+Choose **Settings > MovieBox theme** to preview and apply one of 20 themes.
+Every theme keeps the same sidebar and application features. Colours, branding
+and the poster motion change together; the selection is saved on this device.
+The original five theme IDs and palettes remain available.
 
-| Theme | Appearance and navigation |
-|---|---|
-| Obsidian Cinema | Charcoal and mint, full sidebar |
-| Orbital | Midnight and ice blue, top navigation |
-| Prism | Indigo and violet, compact icon rail |
-| Aurora | Pearl and emerald, light surfaces and top navigation |
-| Eclipse | Cinema black and champagne, display typography and top navigation |
+| Theme | Poster layout |
+| --- | --- |
+| Obsidian Cinema | Orbit Dock |
+| Orbital | Escalator Ribbon |
+| Prism | Floating Prism |
+| Aurora | Accordion Fold |
+| Eclipse | Cinema Tunnel |
+| Nebula Islands | Floating Islands |
+| Solar Wings | Split Wings |
+| Ion Helix | Helix Steps |
+| Verdant Orbit | Turntable |
+| Lunar Rings | Orbit Rings |
+| Plasma Gate | Shutter Gate |
+| Meteor Lane | Domino Lane |
+| Oceanic Crest | Wave Crest |
+| Synthwave Rails | Twin Rails |
+| Celestial Portal | Gallery Portal |
+| Glacial Diamond | Diamond Deck |
+| Stellar Archive | Perspective Bookshelf |
+| Auric Bridge | Filmstrip Bridge |
+| Crimson Comet | Kinetic Fan |
+| Event Horizon | Grand Stage |
 
-The home spotlight requests the service's **Latest** movie and TV channels, taking up to 50 unique titles from each, then shuffles the combined set. Its counter shows the actual available count. If a channel is unavailable, the other channel or existing home feed remains usable. It never fabricates 100 entries when fewer are returned.
+Home combines available latest movies and TV shows, up to 100 unique hero picks.
+Repeated cover/language editions are collapsed only in this rotation; catalogue
+editions remain available. Fewer than 100 usable picks remain an honest smaller
+set. Only visible/neighbour artwork is prepared, with bounded image caches.
 
-The slideshow advances every eight seconds while eligible. Previous/Next and Pause/Resume are keyboard/remote accessible. Automatic rotation pauses while its controls are focused, on hover, outside Home, during video playback or while hidden. TV reduced-motion preference also disables automatic rotation. Watch resolves the active title and starts that title; More info opens its details without autoplay. A TV-show slide exposes that show's seasons and episodes. Existing saved progress still applies.
+Select a poster to open its exact title details. Watch, My list and series
+selection remain on Details. The hero itself has no visible action row, arrows,
+pause button, counter or Selected badge. Left/Right browses and Enter/OK selects.
+Automatic movement pauses temporarily after input, resumes after eight idle
+seconds, then advances about every six seconds. Focus alone does not stop it
+permanently. Explicit Space pause is separate. Hidden pages, playback and reduced
+motion preferences suspend automatic animation.
 
-Only metadata for the rotation is fetched in the background; artwork loads for the active slide rather than 100 full-size images. No streams or subtitles are downloaded just to fill the carousel. Theme selection does not replace the native player, clear the library or restart a stream. Lists and preferences remain local per installation.
+Continue watching shows up to three genuine unfinished titles with real progress.
+View all retains the existing history management, selection, removal and undo
+flows. Theme changes do not replace library data or restart a playing stream.
 
-Validation includes all previous offline/UI checks, actual Qt settings/theme/player tests, fixture TV remote/theme/carousel tests, and a live 100-title feed probe. Mock AVPlay checks are not hardware playback proof. Upstream availability, network conditions and other devices still need their own testing.
+The Samsung remote remains the primary TV input. Visual Settings retain all
+preferences. The semi-transparent episode dock sits between the player bars;
+its header/footer remain fixed while the episode list scrolls.

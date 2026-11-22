@@ -415,7 +415,7 @@ def run():
             assert perf.evaluate('document.getElementById("main-content").scrollTop')>0
             for _ in range(100): perf.keyboard.press('ArrowUp')
             assert perf.evaluate('document.getElementById("main-content").scrollTop')==0
-            assert perf.evaluate('document.activeElement.closest("#main-content")!==null')
+            assert perf.evaluate('document.activeElement.closest("#main-content")!==null||document.activeElement.dataset.nav==="home"')
             checks['remote_up_returns_all_the_way_to_page_top']=True
             perf.locator('.poster-card').first.focus()
             perf.wait_for_timeout(200)

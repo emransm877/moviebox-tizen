@@ -13,6 +13,7 @@
     constructor() {
       this.bannerIndex = {};
       this.webToken = ''; this.nativeToken = ''; this.warming = null; this.captionCache = new Map(); this.resourceContext = new Map(); this.captionTimes = new Map();
+      this.detailCache = new Map(); this.detailPending = new Map();
       this.preview = !root.tizen && /^https?:$/.test(location.protocol);
       this.streamUserAgent = root.MovieBoxMediaUserAgent || 'com.community.oneroom/50020104 (Linux; U; Android 17; en_US; TizenTV; Build/LOCAL; Cronet/135.0.7012.3) MovieBoxTV/0.1';
       this.client = {package_name:'com.community.oneroom',version_name:'4.0.03.0930.03',version_code:50020104,
@@ -76,13 +77,29 @@
     async search(keyword,page) { if(this.preview)return this.proxy('search',[keyword,page||1]);await this.warm();const result=await this.native('/subject-api/search',{host:NATIVE},{keyword:keyword,page:page||1,perPage:10,subjectType:0});return Object.assign({},result,{hasMore:!!(result.pager&&result.pager.hasMore),nextPage:result.pager&&result.pager.nextPage}); }
     async suggest(keyword) { if(this.preview)return this.proxy('suggest',[keyword]);await this.warm();const result=await this.native('/subject-api/search-suggest',{keyword:keyword,perPage:10,resultMode:0});return result.items||[]; }
     async detail(subject) {
-      if(this.preview)return this.proxy('detail',[subject]);
-      await this.warm();
-      const result={subject:await this.native('/subject-api/get',{host:NATIVE,subjectId:subject.subjectId})};result.subject=result.subject||subject;
-      result.isSeries=Number(result.subject.subjectType)===2;result.resource=result.resource||{};
-      if(!result.isSeries)result.resource.seasons=[];
-      else { await this.warm(); const metadata=await this.native('/subject-api/season-info',{host:NATIVE,subjectId:subject.subjectId});if(metadata.seasons)result.resource.seasons=metadata.seasons; }
-      return result;
+      if(!this.preview)await this.warm();
+      const identity=this.nativeToken,key=JSON.stringify([identity,String(subject.subjectId),Number(subject.subjectType)]),now=Date.now();
+      const clone=value=>JSON.parse(JSON.stringify(value)),cached=this.detailCache.get(key);
+      if(cached&&now-cached.at<60000){this.detailCache.delete(key);this.detailCache.set(key,cached);return clone(cached.data);}
+      if(cached)this.detailCache.delete(key);
+      if(this.detailPending.has(key))return clone(await this.detailPending.get(key));
+      const load=async()=>{
+        let result;
+        if(this.preview)result=await this.proxy('detail',[subject]);
+        else {
+          const params={host:NATIVE,subjectId:subject.subjectId};
+          const season=Number(subject.subjectType)===2?this.native('/subject-api/season-info',params).then(data=>({data}),error=>({error})):null;
+          const actual=await this.native('/subject-api/get',params);
+          if(!actual||String(actual.subjectId)!==String(subject.subjectId)||![1,2].includes(Number(actual.subjectType)))throw new Error('Title details did not match the selected title.');
+          result={subject:actual,isSeries:Number(actual.subjectType)===2,resource:{seasons:[]}};
+          if(result.isSeries){const metadata=season?await season:{data:await this.native('/subject-api/season-info',params)};if(metadata.error)throw metadata.error;if(metadata.data&&metadata.data.subjectId!=null&&String(metadata.data.subjectId)!==String(subject.subjectId))throw new Error('Episode details did not match the selected title.');result.resource.seasons=(metadata.data||{}).seasons||[];}
+        }
+        if(!result||!result.subject||String(result.subject.subjectId)!==String(subject.subjectId)||![1,2].includes(Number(result.subject.subjectType)))throw new Error('Title details did not match the selected title.');
+        if(identity===this.nativeToken){this.detailCache.set(key,{at:Date.now(),data:clone(result)});while(this.detailCache.size>64)this.detailCache.delete(this.detailCache.keys().next().value);}
+        return result;
+      };
+      const pending=load();this.detailPending.set(key,pending);
+      try{return clone(await pending);}finally{this.detailPending.delete(key);}
     }
     async playback(subject,season,episode) {
       if(this.preview)return this.proxy('playback',[subject,season||0,episode||0]);

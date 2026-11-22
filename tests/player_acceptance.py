@@ -91,7 +91,8 @@ try:
   page.keyboard.down('ArrowUp');page.wait_for_timeout(260)
   assert page.locator('#episode-drawer').is_visible() and page.evaluate('nativeState')=='PLAYING'
   assert page.locator('#player-season-select').bounding_box()['width']<=260
-  assert abs(page.locator('#episode-drawer').bounding_box()['x']+page.locator('#episode-drawer').bounding_box()['width']-1920)<2
+  drawer_rect=page.locator('#episode-drawer').bounding_box()
+  assert 20<=1920-drawer_rect['x']-drawer_rect['width']<=40 and drawer_rect['y']>=20
   page.keyboard.down('ArrowUp');page.keyboard.up('ArrowUp')
   page.keyboard.press('Escape');assert not page.locator('#episode-drawer').is_visible()
   checks['single_up_press_opens_right_drawer_without_pausing']=True

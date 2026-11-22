@@ -42,7 +42,7 @@
       for(var j=0;j<records.length;j++) {
         var record=records[j];if(!record||typeof record!=='object'||!record.url)continue;
         var w=Number(record.width)||0,h=Number(record.height)||0;
-        if(w<1280||h<600||w/h<1.45||w/h>3.2)continue;
+        if(w<640||h<320||w/h<1.45||w/h>3.2)continue;
         if(record.subjectId!=null && String(record.subjectId)!==String(subject.subjectId))continue;
         // Use the original HD source, never a small thumbnail field.
         return url({stills:{url:record.url,width:w,height:h}},'stills',width||1280);
@@ -51,23 +51,31 @@
     return '';
   }
   function prepare(data,index) {
-    ((data&&data.operatingList)||[]).forEach(function(section){
-      (((section.banner||{}).items)||[]).forEach(function(item){
+    function releaseYear(value){var text=String(value||'');if(/^\d{4}$/.test(text))return text;if(/^\d{4}-\d{2}-\d{2}$/.test(text)){var date=new Date(text);if(!isNaN(date.getTime())&&date.toISOString().slice(0,10)===text)return text.slice(0,4);}return '';}
+    function add(items) {
+      (items||[]).forEach(function(item){
         var subject=item.subject||{},id=String(item.subjectId||'');
-        if(!id||id!==String(subject.subjectId)||item.subjectType!==subject.subjectType||!subject.title||!subject.releaseDate)return;
+        if(!id||id==='0'||id!==String(subject.subjectId)||(item.subjectType!=null&&Number(item.subjectType)!==Number(subject.subjectType))||![1,2].includes(Number(subject.subjectType))||!subject.title||!releaseYear(subject.releaseDate))return;
         var image=Object.assign({},item.image,{subjectId:id});
-        if(banner({subjectId:id,banner:image}))index[id]={title:subject.title,releaseDate:subject.releaseDate,subjectType:subject.subjectType,image:image};
+        if(banner({subjectId:id,banner:image}))index[id]={title:subject.title,year:releaseYear(subject.releaseDate),subjectType:subject.subjectType,image:image};
       });
+    }
+    ((data&&data.operatingList)||[]).forEach(function(section){
+      add((section.banner||{}).items);
+    });
+    ((data&&data.items)||[]).forEach(function(section){
+      add((section.banner||{}).banners);
     });
     var keys=Object.keys(index);while(keys.length>512)delete index[keys.shift()];
     function attach(node) {
       if(Array.isArray(node)){node.forEach(attach);return;}
       if(!node||typeof node!=='object')return;
       var match=index[String(node.subjectId)];
-      if(match&&node.title===match.title&&node.releaseDate===match.releaseDate&&node.subjectType===match.subjectType)node.banner=Object.assign({},match.image);
+      if(match&&node.title===match.title&&releaseYear(node.releaseDate)===match.year&&Number(node.subjectType)===Number(match.subjectType))node.banner=Object.assign({},match.image);
       Object.keys(node).forEach(function(key){attach(node[key]);});
     }
     attach(data);return data;
   }
-  global.MovieBoxArtwork = {url:url,banner:banner,prepare:prepare,metrics:metrics,imageUrl:imageUrl,aspectRatio:aspectRatio};
+  function hero(subject,width) { var wide=banner(subject,width);return {url:wide||url(subject,'cover',width||720),kind:wide?'banner':'cover'}; }
+  global.MovieBoxArtwork = {url:url,banner:banner,prepare:prepare,metrics:metrics,imageUrl:imageUrl,aspectRatio:aspectRatio,hero:hero};
 })(window);

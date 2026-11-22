@@ -1,30 +1,24 @@
 # Changelog
 
-### 0.9.3 development follow-up — 2026-11-22
+## 0.9.3 - 2026-11-23
 
-- Reinstall and launch verification on the existing Samsung U8000F after its
-  Tizen 10 upgrade; document same-author recovery and future-firmware limits.
-- Repair double-encoded player punctuation and keep international metadata,
-  subtitle cues, URLs and identifiers lossless through shared UI/cache paths.
-- Add encoding/source checks, optional-capability regressions and real decoded
-  HTML playback-event tests. Ignore stale pause/playing events that disagree
-  with the media element's current state.
-- Keep horizontal menus above scrolled content; add readable navigation names
-  in compact themes and correct small status/count labels.
-- Fit each genuine cover to its own aspect ratio without cropping; preserve
-  catalogue row navigation and focus after loading more in every section.
-- Align player bars, allow vertical navigation out of single-line Settings fields,
-  size dropdowns to their contents and refine the right-side episode drawer.
-- Bound installer commands, verify the selected TV and installation/launch,
-  preserve the app identity, and validate reproducible install bundles in CI.
-
-## 0.9.3 - 2026-11-18
-
-- Read the service's HD promotional banner records and attach them only to their exact movie/series identity. Exclude trailer frames, posters, low-resolution images and mismatched subject IDs.
-- Keep full-width hero framing, clear old artwork before changing slides, and ignore delayed image responses from previous slides.
-- Preserve banner metadata in the catalogue cache and keep browsing/detail posters proportional.
-- Artwork identity tests and the five-theme browser checks passed. A later
-  follow-up installed this source revision on Tizen 10; see the entry above.
+- Add 20 themes, animated poster layouts, a consistent sidebar, compact Continue
+  watching cards and visual Settings while retaining existing library/player flows.
+- Deduplicate hero covers and resume automatic movement eight seconds after input;
+  selecting a poster opens its own title details. Remove the hero action/counter row.
+- Fill equal catalogue frames proportionally and preserve exact title/artwork
+  ownership, cached pages and navigation focus during refresh and pagination.
+- Repair double-encoded player punctuation without altering valid international
+  titles, identifiers, URLs or subtitle cues.
+- Improve metadata task isolation, source recovery, optional-capability handling,
+  Settings navigation and content-sized dropdowns.
+- Add the semi-transparent right-side Folded Dock episode panel between the top
+  and bottom player bars, with a scrollable episode list and real progress state.
+- Verify in-place recovery and playback on the Samsung U8000F after Tizen 10;
+  earlier hardware checks cover Tizen 9. Other models/firmware need validation.
+- Keep same-author installation, bounded installer commands, widget integrity
+  checks and the existing app identity. Each TV still needs an authorized
+  Samsung signing certificate for developer installation.
 
 ## 0.9.2 - 2026-11-15
 

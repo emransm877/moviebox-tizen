@@ -5,6 +5,7 @@ from http.server import ThreadingHTTPServer
 import json
 from pathlib import Path
 import threading
+import traceback
 
 from playwright.sync_api import sync_playwright
 from ui_acceptance import ROOT, STUB, QuietHandler
@@ -60,12 +61,12 @@ def run(output):
                         page.keyboard.press('ArrowUp')
                         assert page.evaluate('document.activeElement.id') == 'preferred-language'
                         page.keyboard.press('ArrowUp')
-                        assert page.evaluate('document.activeElement.id') == 'preferred-engine'
+                        assert page.evaluate('document.activeElement.id') == 'preferred-theme'
                         assert field.input_value() == 'bn'
                         assert page.evaluate('MovieBoxTV.state.settings.language') == 'bn'
                         results[f'{width}_{theme}_settings'] = {'passed': True}
                     except AssertionError as error:
-                        results[f'{width}_{theme}_settings'] = {'passed': False, 'error': str(error)}
+                        results[f'{width}_{theme}_settings'] = {'passed': False, 'error': traceback.format_exc()}
                     page.screenshot(path=str(output/f'{width}-{theme}-settings.png'))
                     page.evaluate('MovieBoxTV.openDetail(window.movie)')
                     page.wait_for_function('!document.getElementById("watch-button").disabled')
@@ -83,7 +84,7 @@ def run(output):
                         assert page.locator('#player-controls .transport-row button:visible,#player-controls .transport-row select:visible,#player-clock').evaluate_all('elements=>elements.every(element=>{const box=element.getBoundingClientRect(),bar=document.getElementById("player-controls").getBoundingClientRect();return box.left>=bar.left && box.right<=bar.right;})')
                         results[f'{width}_{theme}_alignment'] = {'passed': True, **bounds}
                     except AssertionError as error:
-                        results[f'{width}_{theme}_alignment'] = {'passed': False, 'error': str(error), **bounds}
+                        results[f'{width}_{theme}_alignment'] = {'passed': False, 'error': traceback.format_exc(), **bounds}
                     page.screenshot(path=str(output/f'{width}-{theme}-player.png'))
                     context.close()
             browser.close()

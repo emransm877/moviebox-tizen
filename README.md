@@ -7,21 +7,22 @@ The interface is designed for the Samsung remote and runs independently on the T
 Auto uses the TV's HTML video engine for MP4 with app-scoped media request headers;
 Samsung AVPlay remains selectable for alternate formats and embedded audio tracks.
 
-**Published download: 0.9.2. Development source: 0.9.3 (unreleased).**
+**Current version: 0.9.3.**
 
-Source 0.9.3: HD promotional banners are matched to exact title IDs. Trailer
-frames and portrait covers are no longer used as hero banners. Artwork identity
-checks and the five-theme browser suite pass. Source 0.9.3 was reinstalled and
-launched on the Samsung U8000F after its upgrade to Tizen 10. Actual HTML video
-playback, 1080p/480p selection, seeking and English/Bangla captions were checked.
-Earlier hardware checks cover Tizen 9. The minimum remains Tizen 7; other models
+This version adds 20 selectable themes, compact 3D poster carousels, a consistent
+left sidebar, Continue watching cards and visual settings. Each poster opens its
+own title details; playback and library features remain available there.
+
+Earlier source builds were exercised on the Samsung U8000F after its upgrade to
+Tizen 10, including playback, seeking and English/Bangla captions. Earlier
+hardware checks also cover Tizen 9. The minimum remains Tizen 7; other models
 and future firmware need their own validation. See
 [compatibility and update recovery](docs/COMPATIBILITY.md).
 See [hardware validation](docs/hardware-validation.md).
 
 ## Download and install
 
-[**Download TV install bundle**](https://github.com/emransm877/moviebox-tizen/releases/download/v0.9.2/MovieBox-TV-0.9.2-install-bundle.zip)
+[**Download TV install bundle**](https://github.com/emransm877/moviebox-tizen/releases/download/v0.9.3/MovieBox-TV-0.9.3-install-bundle.zip)
 
 This is a developer-install bundle: an unsigned WGT plus a Windows helper that
 signs and installs using your own Samsung TV certificate profile. Extract it,
@@ -38,8 +39,9 @@ Android TV, webOS, Roku or Apple TV package.
 - Discover titles, live search suggestions, movie details and series episodes.
 - Separate Movies and TV Shows catalogues with live server pagination and combined
   year, genre, country, language/edition, sorting and minimum-rating filters.
-- Full-image artwork frames follow each cover's real proportions. Loading more
-  results retains the current section and moves focus to the new cards.
+- Equal portrait catalogue frames crop artwork proportionally to fill the border;
+  detail posters retain full-image framing. Loading more results retains the
+  current section and moves focus to the new cards.
 - Native API BlurHash placeholders are distinguished from image URLs, so artwork
   renders in My list, search and detail pages without decoding enormous originals.
 - Arrows/OK/Return navigation, remote transport keys and remote-friendly option menus.
@@ -139,7 +141,7 @@ See `THIRD_PARTY_NOTICES.md`, `CONTRIBUTING.md` and `SECURITY.md`.
 
 ## Themes and latest titles
 
-Choose any of five persistent themes in Settings, including a matching MovieBox logo. Home rotates up to 100 latest movies and TV shows with remote-friendly Previous/Next/Pause and Watch/More info actions for the active title. See [behavior and feature preservation](docs/THEMES_AND_SPOTLIGHT.md).
+Choose from 20 persistent themes in visual Settings, including matching branding and poster motion. Home shows up to 100 distinct latest movie/TV picks; selecting a card opens its own details. Left/Right browses, OK selects, and automatic movement resumes after eight idle seconds. Visible carousel button rows and counters are removed. See [behavior and feature preservation](docs/THEMES_AND_SPOTLIGHT.md).
 
 ## Catalogue cache and Continue watching
 
