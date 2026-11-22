@@ -2,6 +2,7 @@
 from functools import partial
 from http.server import ThreadingHTTPServer
 import threading,json
+from playwright.sync_api import TimeoutError as PlaywrightTimeoutError
 from playwright.sync_api import sync_playwright
 from ui_acceptance import ROOT,STUB,QuietHandler
 OUT=ROOT/'verification'/'hero-artwork';OUT.mkdir(parents=True,exist_ok=True)
@@ -14,9 +15,18 @@ def run():
             for width,height in [(1920,1080),(1280,720)]:
                 page=b.new_page(viewport={'width':width,'height':height},reduced_motion='reduce')
                 page.route('**/*',lambda r:r.abort());page.route(f'http://127.0.0.1:{server.server_port}/**',lambda r:r.continue_());page.route('**/js/api.js',lambda r:r.fulfill(content_type='text/javascript',body=STUB+EXTRA));page.route('**/$WEBAPIS/**',lambda r:r.fulfill(body=''))
-                page.route('**/image/owned-portrait.svg*',lambda r:r.fulfill(content_type='image/svg+xml',body='<svg xmlns="http://www.w3.org/2000/svg" width="3276" height="4096"><rect width="100%" height="100%" fill="#276d60"/><text x="150" y="700" font-size="300" fill="white">OWN COVER</text></svg>'))
-                page.route('**/hero-fixture/**',lambda r:r.fulfill(content_type='image/svg+xml',body='<svg xmlns="http://www.w3.org/2000/svg" width="3276" height="4096"><rect width="100%" height="100%" fill="#276d60"/><text x="150" y="700" font-size="300" fill="white">OWN COVER</text></svg>' if 'portrait' in r.request.url else '<svg xmlns="http://www.w3.org/2000/svg" width="920" height="518"><rect width="100%" height="100%" fill="#276d60"/><text x="80" y="260" font-size="80" fill="white">OWN BANNER</text></svg>'))
-                page.goto(f'http://127.0.0.1:{server.server_port}/');page.wait_for_function('document.querySelector(".hero-poster img")?.naturalWidth>0');page.evaluate('MovieBoxTV.carousel.loaded=true')
+                page.route('**/image/owned-portrait.svg*',lambda r:r.fulfill(content_type='image/svg+xml',body='<svg xmlns="http://www.w3.org/2000/svg" width="360" height="450"><rect width="100%" height="100%" fill="#276d60"/><text x="16" y="77" font-size="33" fill="white">OWN COVER</text></svg>'))
+                page.route('**/hero-fixture/**',lambda r:r.fulfill(content_type='image/svg+xml',body='<svg xmlns="http://www.w3.org/2000/svg" width="360" height="450"><rect width="100%" height="100%" fill="#276d60"/><text x="16" y="77" font-size="33" fill="white">OWN COVER</text></svg>' if 'portrait' in r.request.url else '<svg xmlns="http://www.w3.org/2000/svg" width="920" height="518"><rect width="100%" height="100%" fill="#276d60"/><text x="80" y="260" font-size="80" fill="white">OWN BANNER</text></svg>'))
+                page.goto(f'http://127.0.0.1:{server.server_port}/')
+                try:
+                    page.wait_for_function('document.querySelector(".hero-poster img")?.naturalWidth>0')
+                except PlaywrightTimeoutError:
+                    # Preserve useful evidence if a hosted browser cannot decode the
+                    # intercepted fixture; no network retries or skipped assertions.
+                    page.screenshot(path=str(OUT/f'{width}-initial-artwork-failure.png'))
+                    print(json.dumps(page.evaluate('''()=>({ready:document.readyState,heroHidden:document.getElementById('hero').hidden,stage:document.getElementById('hero-poster-stage').getBoundingClientRect().toJSON(),images:[...document.querySelectorAll('.hero-poster img')].map(n=>({src:n.src,currentSrc:n.currentSrc,complete:n.complete,width:n.naturalWidth,hidden:n.hidden})),status:document.getElementById('status')?.textContent})''')),flush=True)
+                    raise
+                page.evaluate('MovieBoxTV.carousel.loaded=true')
                 for theme in ('obsidian','orbital','prism','aurora','eclipse'):
                     page.evaluate('t=>MovieBoxThemes.apply(t)',theme)
                     assert page.locator('.hero-poster').count()==1
