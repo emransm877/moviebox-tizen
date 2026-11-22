@@ -9,6 +9,11 @@ Samsung AVPlay remains selectable for alternate formats and embedded audio track
 
 **Current version: 0.9.3.**
 
+![MovieBox 0.9.3 home on Samsung U8000F with the 20-theme interface](docs/images/samsung-home-v0.9.3.png)
+
+*Actual Samsung U8000F/Tizen 10 capture of the 0.9.3 interface. This is the TV app,
+not a browser mockup; other TV models and future firmware remain unverified.*
+
 This version adds 20 selectable themes, compact 3D poster carousels, a consistent
 left sidebar, Continue watching cards and visual settings. Each poster opens its
 own title details; playback and library features remain available there.
@@ -150,7 +155,15 @@ Movies/TV Shows restore their cached pages and position immediately. After five 
 
 ## Other MovieBox platforms
 
-[Android phone patch](https://github.com/emransm877/moviebox-android) · [Windows desktop app](https://github.com/emransm877/moviebox-desktop) · [Android TV / Google TV app](https://github.com/emransm877/moviebox-android-tv)
+| Device | Separate project |
+| --- | --- |
+| Android phone - native client | [MovieBox Android Native](https://github.com/emransm877/moviebox-android-native) |
+| Android phone - reviewed APK patch | [MovieBox Android patch](https://github.com/emransm877/moviebox-android) |
+| Windows PC | [MovieBox Desktop](https://github.com/emransm877/moviebox-desktop) |
+| Android TV / Google TV | [MovieBox Android TV](https://github.com/emransm877/moviebox-android-tv) |
+
+The independently authored native phone client uses a different APK and private
+library from the reviewed phone patch. Neither phone APK updates this Samsung app.
 
 Choose the package for your operating system. These are separate independent
 projects; an APK, Windows EXE and Samsung WGT are not interchangeable.
