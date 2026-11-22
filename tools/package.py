@@ -8,6 +8,16 @@ import xml.etree.ElementTree as ET
 import zipfile
 
 ROOT=Path(__file__).resolve().parents[1]
+TEXT_SUFFIXES={'.js','.css','.html','.svg','.xml','.json','.txt','.md'}
+
+def payload_bytes(path):
+    data=path.read_bytes()
+    if path.suffix.lower() not in TEXT_SUFFIXES:return data
+    try:text=data.decode('utf-8')
+    except UnicodeDecodeError as error:raise ValueError('TV text payload must be UTF-8: '+path.name) from error
+    # Git may materialize text as CRLF on Windows. Package canonical source
+    # bytes so the reviewed digest does not depend on checkout preferences.
+    return text.replace('\r\n','\n').replace('\r','\n').encode('utf-8')
 
 def package(output=None):
     app=ROOT/'app'
@@ -28,7 +38,7 @@ def package(output=None):
         for path in files:
             name=path.relative_to(app).as_posix()
             item=zipfile.ZipInfo(name,date_time=(2026,1,1,0,0,0));item.compress_type=zipfile.ZIP_DEFLATED
-            archive.writestr(item,path.read_bytes())
+            archive.writestr(item,payload_bytes(path))
     digest=hashlib.sha256(output.read_bytes()).hexdigest()
     output.with_suffix('.wgt.sha256').write_text(digest+'  '+output.name+'\n',encoding='utf-8')
     return {'path':str(output),'bytes':output.stat().st_size,'files':len(files),'sha256':digest,'signed':False}
