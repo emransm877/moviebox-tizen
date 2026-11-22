@@ -1,6 +1,8 @@
 """Bounded evidence for fixture startup failures; no retry or relaxed assertions."""
 import json
+import re
 import time
+from urllib.parse import urlsplit
 
 
 class FixtureBootEvidence:
@@ -16,7 +18,30 @@ class FixtureBootEvidence:
 
     @staticmethod
     def _url(value):
-        return '[inline fixture image]' if value.startswith('data:') else value[:500]
+        if value.startswith('data:'):
+            return '[inline fixture image]'
+        try:
+            parsed = urlsplit(value)
+            if parsed.scheme not in {'http', 'https'}:
+                return '[non-HTTP resource]'
+            host = parsed.hostname or ''
+            origin = parsed.scheme+'://'+host+((':'+str(parsed.port)) if parsed.port else '')
+            # Preserve local fixture filenames, never remote paths, URL credentials or queries.
+            return origin+(parsed.path if host in {'127.0.0.1', 'localhost', '::1'} else '/[external-path-omitted]')
+        except (ValueError, TypeError):
+            return '[unparseable resource URL]'
+
+    @classmethod
+    def _sanitize(cls, value):
+        if isinstance(value, dict):
+            return {key: cls._sanitize(item) for key, item in value.items()}
+        if isinstance(value, list):
+            return [cls._sanitize(item) for item in value]
+        if not isinstance(value, str):
+            return value
+        value = re.sub(r'https?://[^\s\'"<>]+', lambda match: cls._url(match.group()), value)
+        value = re.sub(r'(?i)\bBearer\s+[A-Za-z0-9._~+/=-]+', 'Bearer [redacted]', value)
+        return re.sub(r'(?i)((?:access[_-]?token|refresh[_-]?token|authorization|password|api[_-]?key|client[_-]?secret)\s*[=:]\s*)[^\s,;]+', r'\1[redacted]', value)
 
     @staticmethod
     def _keep(values, value):
@@ -37,6 +62,7 @@ class FixtureBootEvidence:
               scripts:Array.from(document.scripts,s=>s.src),pages:Array.from(document.querySelectorAll('main>section'),e=>({id:e.id,hidden:e.hidden}))})''')
         except Exception as failure:
             record['documentError'] = str(failure)
+        record = self._sanitize(record)
         self.output.mkdir(parents=True, exist_ok=True)
         (self.output/(self.label+'-boot-failure.json')).write_text(json.dumps(record, indent=2, ensure_ascii=False), encoding='utf-8')
         try:
